@@ -766,7 +766,7 @@ endDate=""
 optionR=0
 optionM=0
 pathFile=""
-subscriptionKey=""
+SUBSCRIPTIONKEY="2096ca67bcd44b47aea128c814f92df2"
 
 if [ $# -eq 0 ]
 then
@@ -800,7 +800,7 @@ do
 		fi
 		;;
 	k)
-		subscriptionKey=$OPTARG
+		SUBSCRIPTIONKEY=$OPTARG
 		;;
 	l)
 		usage $OPTARG;
@@ -818,6 +818,7 @@ do
 		;;
 	esac
 done
+export $SUBSCRIPTIONKEY
 
 #####################################################################################################
 #					First Integrity Control				 	    #
@@ -836,14 +837,14 @@ function controleParameter()
 	return 0
 }
 
-type jq
+type jq > /dev/null 2> /dev/null
 if [ $? -ne 0 ]
 then
 	echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: This script needs jq installed ! See this page for install: https://stedolan.github.io/jq/download/" | tee -a compagnyScriptError.log
 	exit 1
 fi
 
-type curl
+type curl > /dev/null 2> /dev/null
 if [ $? -ne 0 ]
 then
 	echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: This script needs curl installed ! See this page for install: https://curl.haxx.se/download.html" | tee -a compagnyScriptError.log
@@ -916,21 +917,14 @@ function handleCurlError()
 {
 	# $1: URL
 	# $2: FileForCurlOutput
-	# $3: Optional: Subscription-Key
 	
-	subscriptionKey="2096ca67bcd44b47aea128c814f92df2"
-	if [ "$#" -eq 3 ] 
-	then
-		subscriptionKey=$3
-	fi
-
 	atemptCurlCommand=1
 	maxAtemptCurlError=10
 	numberCurlErrorAtemp=1
 
 	while [ $atemptCurlCommand -eq 1 ]
 	do
-		curl -X GET --compressed "$1" -H "Ocp-Apim-Subscription-Key: $subscriptionKey" --data-ascii "{body}" > $2 2> /dev/null
+		curl -X GET --compressed "$1" -H "Ocp-Apim-Subscription-Key: $SUBSCRIPTIONKEY" --data-ascii "{body}" > $2 2> /dev/null
 		retourCurl=$?
 		statusCode=`cat $2 | jq '.statusCode' 2> /dev/null`
 
@@ -954,6 +948,10 @@ function handleCurlError()
 			numberSecond=`shuf -i 10-20 -n 1`
 			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Rate limit is exceeded. New attempt in $numberSecond Secondes" >> compagnyScriptError.log
 			sleep $numberSecond
+		elif [ ! -z "$statusCode" ] && [ "$statusCode" = "401" ]
+		then
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Subscription Key is not valid ! ($SUBSCRIPTIONKEY)" >> compagnyScriptError.log
+			exit 1
 		elif [ ! -z "$statusCode" ]
 		then
 			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Unknow StatusCode ($statusCode)" >> compagnyScriptError.log
