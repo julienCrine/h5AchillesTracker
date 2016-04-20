@@ -671,10 +671,10 @@
 #   If the program does terminal interaction, make it output a short
 # notice like this when it starts in an interactive mode:
 # 
-#     <program>  Copyright (C) <year>  <name of author>
-#     This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+#     h5AchillesTracker Copyright (C) 2016  Julien CRINE
+#     This program comes with ABSOLUTELY NO WARRANTY; for details type './h5AchillesTracker.sh -l warranty'.
 #     This is free software, and you are welcome to redistribute it
-#     under certain conditions; type `show c' for details.
+#     under certain conditions; type './h5AchillesTracker.sh -l conditions' for details.
 # 
 # The hypothetical commands `show w' and `show c' should show the appropriate
 # parts of the General Public License.  Of course, your program's commands
@@ -742,6 +742,7 @@ function usage()
 			echo "-m 			: [RefreshMetaData] Flag de rafraichissement des metadatas"
 			echo "-f [PathFile]		: En mode fichier indique l'emplacement du fichier a charger"
 			echo "-k [SubscriptionKey]	: La clef de souscription à l'API H5 343 Industries"
+			echo "-l [partOfLicence]	: Afficher une partie de la licence (warranty, affiche les garanties et conditions les conditions)"
 			echo "-h 			: Affiche l'aide"
 		else
 			echo "How to Use This Script :"
@@ -752,6 +753,7 @@ function usage()
 			echo "-m 			: [RefreshMetaData] Flag to refresh metadatas"
 			echo "-f [PathFile]		: In inpout file mode use it for pathfile"
 			echo "-k [SubscriptionKey]	: Use it for set your subscription key to 343 H5 API"
+			echo "-l [partOfLicence]	: Display a part of licence (warranty, display warranty and conditions the conditions)"
 			echo "-h 			: Display Help"
 		fi
 		printf "\n\n\n"
