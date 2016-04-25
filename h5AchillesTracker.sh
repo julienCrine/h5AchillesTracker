@@ -818,6 +818,7 @@ do
 		if [ ! -e $pathFile ]
 		then
 			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: $pathFile not exists" | tee -a logsH5/h5AchillesTracker.error.log
+			exit 1
 		fi
 		;;
 	k)
@@ -1397,18 +1398,18 @@ do
 	#####################################################################################################
 
 	startTime=$(($(date +%s%N)/1000000))
-	handleCurlError "https://www.haloapi.com/stats/h5/servicerecords/arena?players=$playerUrlFormat" "srArena"
-	nbrgameArena=`cat srArena | jq '.Results[].Result.ArenaStats.TotalGamesCompleted'`
+	handleCurlError "https://www.haloapi.com/stats/h5/servicerecords/arena?players=$playerUrlFormat" "tmpH5/srArena.tmp"
+	nbrgameArena=`cat tmpH5/srArena.tmp | jq '.Results[].Result.ArenaStats.TotalGamesCompleted'`
 	waitOneS $startTime
 
 	startTime=$(($(date +%s%N)/1000000))
-	handleCurlError "https://www.haloapi.com/stats/h5/servicerecords/custom?players=$playerUrlFormat" "srCustom"
-	nbrgameCustom=`cat srCustom | jq '.Results[].Result.CustomStats.TotalGamesCompleted'`
+	handleCurlError "https://www.haloapi.com/stats/h5/servicerecords/custom?players=$playerUrlFormat" "tmpH5/srCustom.tmp"
+	nbrgameCustom=`cat tmpH5/srCustom.tmp | jq '.Results[].Result.CustomStats.TotalGamesCompleted'`
 	waitOneS $startTime
 
 	startTime=$(($(date +%s%N)/1000000))
-	handleCurlError "https://www.haloapi.com/stats/h5/servicerecords/warzone?players=$playerUrlFormat" "srWarzone"
-	nbrgameWarzone=`cat srWarzone | jq '.Results[].Result.WarzoneStat.TotalGamesCompleted'`
+	handleCurlError "https://www.haloapi.com/stats/h5/servicerecords/warzone?players=$playerUrlFormat" "tmpH5/srWarzone.tmp"
+	nbrgameWarzone=`cat tmpH5/srWarzone.tmp | jq '.Results[].Result.WarzoneStat.TotalGamesCompleted'`
 
 	totalGame=`expr $nbrgameArena + $nbrgameCustom + $nbrgameWarzone + 1`
 	waitOneS $startTime
@@ -1418,17 +1419,17 @@ do
 	#####################################################################################################
 
 	startTime=$(($(date +%s%N)/1000000))
-	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$totalGame&count=1" "firstGame"
+	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$totalGame&count=1" "tmpH5/firstGame.tmp"
 
-	dateFirstGame=`cat firstGame | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1`
+	dateFirstGame=`cat tmpH5/firstGame.tmp | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1`
 	dateFirstGameSeconde=`date -d"$dateFirstGame" +%s`
 	waitOneS $startTime
 
 	startTime=$(($(date +%s%N)/1000000))
-	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=0&count=1" "lastGame"
+	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=0&count=1" "tmpH5/lastGame.tmp"
 
-	dateLastGame=`cat lastGame | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1`
-	idLastGame=`cat lastGame | jq -r '.Results[] | .Id | .MatchId'`
+	dateLastGame=`cat tmpH5/lastGame.tmp | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1`
+	idLastGame=`cat tmpH5/lastGame.tmp | jq -r '.Results[] | .Id | .MatchId'`
 	dateLastGameSeconde=`date -d"$dateLastGame" +%s`
 	waitOneS $startTime 250
 
