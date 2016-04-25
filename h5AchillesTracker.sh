@@ -697,13 +697,33 @@ IFS="
 
 # Nettoyer les passages précédents
 rm listeGame* 2> /dev/null
-rm liveTracking.log.tmp 2> /dev/null
-rm tmp.file.players 2> /dev/null
+rm logsH5/liveTracking.tmp.log 2> /dev/null
+rm tmpH5/file.players.tmp 2> /dev/null
+
+if [ ! -d "logsH5" ]
+then
+	mkdir logsH5
+	if [ $? -ne 0 ]
+	then
+		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Impossible to create logsH5 folder"
+		exit 1
+	fi
+fi
+
+if [ ! -d "tmpH5" ]
+then
+	mkdir tmpH5
+	if [ $? -ne 0 ]
+	then
+		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Impossible to create tmpH5 folder"
+		exit 1
+	fi
+fi
 
 function usage()
 {
 	printf "\n\n\n"
-	echo "h5AchillesTracker Copyright (C) 2016  Julien CRINE"
+	echo "h5AchillesTracker v0.85 Copyright (C) 2016  Julien CRINE"
 	echo "email: julien-crine@orange.fr"
 	echo "Paypal donation: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=julien%2dcrine%40orange%2efr&lc=FR&item_name=Julien%20CRINE&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"
 	printf "\n\n\n"
@@ -738,7 +758,7 @@ function usage()
 			echo "-g [GamerTag]		: Le GamerTag a tracker"
 			echo "-s [DateStart]		: La date de la premiere game à tracker"
 			echo "-e [DateEnd]		: La date de la derniere game à tracker (Optionnel)"
-			echo "-r 			: [RefreshStat] Flag de rafraichissement des stats contenu dans le fichier stat.file"
+			echo "-r 			: [RefreshStat] Flag de rafraichissement des stats contenu dans le fichier h5AchillesTracker.statistique"
 			echo "-m 			: [RefreshMetaData] Flag de rafraichissement des metadatas"
 			echo "-f [PathFile]		: En mode fichier indique l'emplacement du fichier a charger"
 			echo "-k [SubscriptionKey]	: La clef de souscription à l'API H5 343 Industries, si vous n'en avez pas procurez vous en une ici: https://developer.haloapi.com/products/560af1e42109182040fb56fc (il faut se log avec son compte xbox live)"
@@ -749,7 +769,7 @@ function usage()
 			echo "-g [GamerTag]		: GamerTag to track"
 			echo "-s [DateStart]		: The date of first game to track"
 			echo "-e [DateEnd]		: The date of last game to track (Optionnal)"
-			echo "-r 			: [RefreshStat] Flag to refresh stats in file stat.file"
+			echo "-r 			: [RefreshStat] Flag to refresh stats in file h5AchillesTracker.statistique"
 			echo "-m 			: [RefreshMetaData] Flag to refresh metadatas"
 			echo "-f [PathFile]		: In inpout file mode use it for pathfile"
 			echo "-k [SubscriptionKey]	: Use it for set your subscription key to 343 H5 API, if you dont have one you can obtain one here: https://developer.haloapi.com/products/560af1e42109182040fb56fc (loging with xbox live account)"
@@ -797,7 +817,7 @@ do
 		pathFile=$OPTARG
 		if [ ! -e $pathFile ]
 		then
-			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: $pathFile not exists" | tee -a compagnyScriptError.log
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: $pathFile not exists" | tee -a logsH5/h5AchillesTracker.error.log
 		fi
 		;;
 	k)
@@ -810,11 +830,11 @@ do
 		usage;
 		exit 0;;
 	:)
-		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Option $OPTARG requires an argument" | tee -a compagnyScriptError.log
+		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Option $OPTARG requires an argument" | tee -a logsH5/h5AchillesTracker.error.log
 		exit 1
 		;;
 	\?)
-		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: $OPTARG - Invalid option" | tee -a compagnyScriptError.log
+		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: $OPTARG - Invalid option" | tee -a logsH5/h5AchillesTracker.error.log
 		exit 1
 		;;
 	esac
@@ -828,11 +848,11 @@ function controleParameter()
 {
 	if [ -z "$1" ]
 	then
-		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Gamertag is empty" | tee -a compagnyScriptError.log
+		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Gamertag is empty" | tee -a logsH5/h5AchillesTracker.error.log
 		return 1
 	elif [ -z "$2" ]
 	then
-		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: startDate is empty" | tee -a compagnyScriptError.log
+		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: startDate is empty" | tee -a logsH5/h5AchillesTracker.error.log
 		return 1
 	fi
 	return 0
@@ -841,14 +861,14 @@ function controleParameter()
 type jq > /dev/null 2> /dev/null
 if [ $? -ne 0 ]
 then
-	echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: This script needs jq installed ! See this page for install: https://stedolan.github.io/jq/download/" | tee -a compagnyScriptError.log
+	echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: This script needs jq installed ! See this page for install: https://stedolan.github.io/jq/download/" | tee -a logsH5/h5AchillesTracker.error.log
 	exit 1
 fi
 
 type curl > /dev/null 2> /dev/null
 if [ $? -ne 0 ]
 then
-	echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: This script needs curl installed ! See this page for install: https://curl.haxx.se/download.html" | tee -a compagnyScriptError.log
+	echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: This script needs curl installed ! See this page for install: https://curl.haxx.se/download.html" | tee -a logsH5/h5AchillesTracker.error.log
 	exit 1
 fi
 
@@ -856,16 +876,16 @@ if [ $optionR -eq 1 ]
 then
 	if [ ! -z "$gamertag" ] || [ ! -z "$startDate" ] || [ ! -z "$endDate" ] || [ ! -z "$pathFile" ]
 	then
-		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Refresh option have to be use alone ! (Without GT, startdate, enddate or input file" | tee -a compagnyScriptError.log
+		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Refresh option have to be use alone ! (Without GT, startdate, enddate or input file" | tee -a logsH5/h5AchillesTracker.error.log
 		exit 1		
 	fi
 
 	compteurLigneRefresh=0
-	for ligneToRefresh in $(cat stat.file)
+	for ligneToRefresh in $(cat h5AchillesTracker.statistique)
 	do
 		if [ $compteurLigneRefresh -gt 0 ]
 		then
-			echo "`echo $ligneToRefresh | cut -d ';' -f 2`;`echo $ligneToRefresh | cut -d ';' -f 38`;;`echo $ligneToRefresh | cut -d ';' -f 1`;`echo $ligneToRefresh | cut -d ';' -f 39`" >> tmp.file.players
+			echo "`echo $ligneToRefresh | cut -d ';' -f 2`;`echo $ligneToRefresh | cut -d ';' -f 38`;;`echo $ligneToRefresh | cut -d ';' -f 1`;`echo $ligneToRefresh | cut -d ';' -f 39`" >> tmpH5/file.players.tmp
 		fi
 		compteurLigneRefresh=1
 	done
@@ -874,17 +894,17 @@ elif [ ! -z "$pathFile" ]
 then
 	if [ ! -z "$gamertag" ] || [ ! -z "$startDate" ] || [ ! -z "$endDate" ] || [ $optionR -ne 0 ]
 	then
-		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Input file have to be use alone ! (Without GT, startdate, enddate or refresh option)" | tee -a compagnyScriptError.log
+		echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Input file have to be use alone ! (Without GT, startdate, enddate or refresh option)" | tee -a logsH5/h5AchillesTracker.error.log
 		exit 1		
 	fi
-	cat $pathFile > tmp.file.players
+	cat $pathFile > tmpH5/file.players.tmp
 else
 	controleParameter "$gamertag" "$startDate" "$endDate"
 	if [ $? -ne 0 ]
 	then
 		exit 1
 	fi
-	echo "$gamertag;$startDate;$endDate" > tmp.file.players
+	echo "$gamertag;$startDate;$endDate" > tmpH5/file.players.tmp
 fi
 
 #####################################################################################################
@@ -933,26 +953,26 @@ function handleCurlError()
 		then
 			if [ $numberCurlErrorAtemp -gt 10 ]
 			then
-				echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Curl not good... For url: $1 and file $2..." >> compagnyScriptError.log
-				echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) stop tracking (ERROR, more details on log file compagnyScriptError.log)" >> time
+				echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Curl not good... For url: $1 and file $2..." >> logsH5/h5AchillesTracker.error.log
+				echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) stop tracking (ERROR, more details on log file logsH5/h5AchillesTracker.error.log)" >> logsH5/time
 				exit 1
 			fi
-			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Curl not good... For url: $1 and file $2... Attempt $numberCurlErrorAtemp/$maxAtemptCurlError" >> compagnyScriptError.log
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Curl not good... For url: $1 and file $2... Attempt $numberCurlErrorAtemp/$maxAtemptCurlError" >> logsH5/h5AchillesTracker.error.log
 			let numberCurlErrorAtemp="$numberCurlErrorAtemp + 1"
 		elif [ ! -z "$statusCode" ] && [ "$statusCode" = "404" ]
 		then
-			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: URL $1 not Exists (404 Error)" >> compagnyScriptError.log
-			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) stop tracking (ERROR, more details on log file compagnyScriptError.log)" >> time
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: URL $1 not Exists (404 Error)" >> logsH5/h5AchillesTracker.error.log
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) stop tracking (ERROR, more details on log file logsH5/h5AchillesTracker.error.log)" >> logsH5/time
 			exit 1
 		elif [ ! -z "$statusCode" ] && [ "$statusCode" = "429" ]
 		then
 			numberSecond=`shuf -i 10-20 -n 1`
-			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Rate limit is exceeded. New attempt in $numberSecond Secondes" >> compagnyScriptError.log
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Rate limit is exceeded. New attempt in $numberSecond Secondes" >> logsH5/h5AchillesTracker.error.log
 			sleep $numberSecond
 		elif [ ! -z "$statusCode" ] && [ "$statusCode" = "401" ]
 		then
-			printf "\n\n`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Subscription Key is not valid ! (BAD KEY: $SUBSCRIPTIONKEY).\n\nFor get a valid key, you have to go here: https://developer.haloapi.com/products/560af1e42109182040fb56fc\n\nFor use your own key, you have 2 possibility:\n\n- For permanent use, you can edit the script and modify value of var SUBSCRIPTIONKEY (default: \"Put Your Subscription Key Here\") by your own key\n- You can call this script with \"-k\" option, like that: ./h5AchillesTracker -f yourFile -k yourOwnSubscriptionKey\n\n" | tee -a compagnyScriptError.log
-			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) stop tracking (ERROR, more details on log file compagnyScriptError.log)" >> time
+			printf "\n\n`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Subscription Key is not valid ! (BAD KEY: $SUBSCRIPTIONKEY).\n\nFor get a valid key, you have to go here: https://developer.haloapi.com/products/560af1e42109182040fb56fc\n\nFor use your own key, you have 2 possibility:\n\n- For permanent use, you can edit the script and modify value of var SUBSCRIPTIONKEY (default: \"Put Your Subscription Key Here\") by your own key\n- You can call this script with \"-k\" option, like that: ./h5AchillesTracker -f yourFile -k yourOwnSubscriptionKey\n\n" | tee -a logsH5/h5AchillesTracker.error.log
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) stop tracking (ERROR, more details on log file logsH5/h5AchillesTracker.error.log)" >> logsH5/time
 			exit 1
 		else		
 			atemptCurlCommand=0
@@ -989,12 +1009,12 @@ function getStartforADAy()
 	while [ $ok -ne 1 ]
 	do
        		startTime=$(($(date +%s%N)/1000000))
-        	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "listeAuto"
-		cat listeAuto | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1 > dateAuto
+        	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "tmpH5/listeAuto.tmp"
+		cat tmpH5/listeAuto.tmp | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1 > tmpH5/dateAuto.tmp
 
-        	if [ `cat dateAuto | wc -l` -eq 1 ]
+        	if [ `cat tmpH5/dateAuto.tmp | wc -l` -eq 1 ]
        		then
-               		dateLastStart=`cat dateAuto`
+               		dateLastStart=`cat tmpH5/dateAuto.tmp`
                 	dateSecondeLastStart=`date -d"$dateLastStart" +%s`
 
                 	if [ $dateSecondeLastStart -eq $startDateRefSeconde ]
@@ -1072,32 +1092,32 @@ function getFirstGameDay()
 
 	while [ $ok -ne 1 ]
         do
-		currentDate=`cat dateAuto`
+		currentDate=`cat tmpH5/dateAuto.tmp`
         	currentDateSeconde=`date -d"$currentDate" +%s`
 
 		if [ $currentDateSeconde -lt $referenceDateSeconde ]
         	then
 			ok=1
-                	idFirstGame=`cat listeAutoSave | jq -r '.Results[] | .Id | .MatchId'`
+                	idFirstGame=`cat tmpH5/listeAutoSave.tmp | jq -r '.Results[] | .Id | .MatchId'`
                		startFirstGame=$startSave
        		fi
 
         	startSave=$start
-       		cat listeAuto > listeAutoSave
+       		cat tmpH5/listeAuto.tmp > tmpH5/listeAutoSave.tmp
         	let start="$start + 1"
                 
 		# On gere l'exception
                 if [ $startSave -gt $totalGame ] && [ $firstRound -eq 1 ]
                 then
 			ok=1
-                        idFirstGame=`cat listeAutoSave | jq -r '.Results[] | .Id | .MatchId'`
+                        idFirstGame=`cat tmpH5/listeAutoSave.tmp | jq -r '.Results[] | .Id | .MatchId'`
                         startFirstGame=$startSave
 		fi
 
         	waitOneS $startTime 250
         	startTime=$(($(date +%s%N)/1000000))
-        	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "listeAuto"
-		cat listeAuto | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1 > dateAuto
+        	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "tmpH5/listeAuto.tmp"
+		cat tmpH5/listeAuto.tmp | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1 > tmpH5/dateAuto.tmp
 		firstRound=0
 	done
 	
@@ -1116,32 +1136,32 @@ function getLastGameDay()
 
         while [ $ok -ne 1 ]
         do
-                currentDate=`cat dateAuto` 
+                currentDate=`cat tmpH5/dateAuto.tmp` 
                 currentDateSeconde=`date -d"$currentDate" +%s`
 
                 if [ $currentDateSeconde -gt $referenceDateSeconde ]
                 then
                         ok=1
-                        idLastGame=`cat listeAutoSave | jq -r '.Results[] | .Id | .MatchId'`
+                        idLastGame=`cat tmpH5/listeAutoSave.tmp | jq -r '.Results[] | .Id | .MatchId'`
                         startLastGame=$startSave
                 fi
 
                 startSave=$start
-                cat listeAuto > listeAutoSave
+                cat tmpH5/listeAuto.tmp > tmpH5/listeAutoSave.tmp
                 let start="$start - 1"
 
 		# On gere l'exception
 		if [ $startSave -eq 0 ] && [ $firstRound -eq 1 ]
                 then
                         ok=1
-                        idLastGame=`cat listeAutoSave | jq -r '.Results[] | .Id | .MatchId'`
+                        idLastGame=`cat tmpH5/listeAutoSave.tmp | jq -r '.Results[] | .Id | .MatchId'`
                         startLastGame=$startSave
                 fi
 
                 waitOneS $startTime 250
                 startTime=$(($(date +%s%N)/1000000))
-                handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "listeAuto"
-		cat listeAuto | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1 > dateAuto
+                handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "tmpH5/listeAuto.tmp"
+		cat tmpH5/listeAuto.tmp | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1 > tmpH5/dateAuto.tmp
 		firstRound=0
         done
         echo "$ok;$idLastGame;$startLastGame"
@@ -1167,14 +1187,14 @@ function getIDGameDay()
         do
                	waitOneS $startTime 250
                 startTime=$(($(date +%s%N)/1000000))
-                handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "listeAuto"
-		cat listeAuto | jq -r '.Results[] | .Id | .MatchId' > idAuto
-		cat listeAuto | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1 > dateAuto
+                handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "tmpH5/listeAuto.tmp"
+		cat tmpH5/listeAuto.tmp | jq -r '.Results[] | .Id | .MatchId' > tmpH5/idAuto.tmp
+		cat tmpH5/listeAuto.tmp | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1 > tmpH5/dateAuto.tmp
 
-		currentDate=`cat dateAuto` 
+		currentDate=`cat tmpH5/dateAuto.tmp` 
                 currentDateSeconde=`date -d"$currentDate" +%s`
 
-		currentGameID=`cat idAuto`
+		currentGameID=`cat tmpH5/idAuto.tmp`
 
                 if [ "$currentGameID" = "$lastRefreshGameId" ]
                 then
@@ -1186,9 +1206,9 @@ function getIDGameDay()
 			waitOneS $startTime 250
 		        startTime=$(($(date +%s%N)/1000000))
 			let start="$start - 1"
-		        handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "listeAuto"
+		        handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "tmpH5/listeAuto.tmp"
                         ok=1
-                        idGame=`cat listeAuto | jq -r '.Results[] | .Id | .MatchId'`
+                        idGame=`cat tmpH5/listeAuto.tmp | jq -r '.Results[] | .Id | .MatchId'`
                         startGame=$start
 		elif [ $currentDateSeconde -gt $referenceDateSeconde ] || [ $start -eq 0 ]
 		then
@@ -1217,7 +1237,7 @@ function getIDGameDay()
 function getStandardGameInfo()
 {
 	res=0
-	tmp=`cat gameEnTraitement | jq ".PlayerStats[] | select(.Player.Gamertag==\"$2\") | .$1"`
+	tmp=`cat tmpH5/gameEnTraitement.tmp | jq ".PlayerStats[] | select(.Player.Gamertag==\"$2\") | .$1"`
 	if [ ! -z "$tmp" ]
 	then
 		res=$tmp
@@ -1229,9 +1249,9 @@ function getNbrMedaille()
 {
 	res=0
 	
-	for line in $(cat $2.id)
+	for line in $(cat metadataH5/$2.id)
 	do
-		tmp=`cat gameEnTraitement | jq ".PlayerStats[] | select(.Player.Gamertag==\"$1\") | .MedalAwards[] | select(.MedalId==$line) | .Count" | awk '{total+=$1}END{print total}'`
+		tmp=`cat tmpH5/gameEnTraitement.tmp | jq ".PlayerStats[] | select(.Player.Gamertag==\"$1\") | .MedalAwards[] | select(.MedalId==$line) | .Count" | awk '{total+=$1}END{print total}'`
 		if [ ! -z "$tmp" ]
 		then
 			res=`expr $res + $tmp`
@@ -1244,9 +1264,9 @@ function getNbrMedaille()
 function getKillByWeapons()
 {
 	res=0
-	for line in $(cat $2.id)
+	for line in $(cat metadataH5/$2.id)
 	do 
-		tmp=`cat gameEnTraitement | jq ".PlayerStats[] | select(.Player.Gamertag==\"$1\") | .WeaponStats[] | select(.WeaponId.StockId==$line) | .TotalKills" | awk '{total+=$1}END{print total}'`
+		tmp=`cat tmpH5/gameEnTraitement.tmp | jq ".PlayerStats[] | select(.Player.Gamertag==\"$1\") | .WeaponStats[] | select(.WeaponId.StockId==$line) | .TotalKills" | awk '{total+=$1}END{print total}'`
 		if [ ! -z "$tmp" ]
 		then
 			res=`expr $res + $tmp`
@@ -1259,9 +1279,9 @@ function getKillByWeapons()
 function getVehiculeDestroy()
 {
 	res=0
-	for line in $(cat id.vehicule)
+	for line in $(cat metadataH5/id.vehicule)
 	do 
-		tmp=`cat gameEnTraitement | jq ".PlayerStats[] | select(.Player.Gamertag==\"$1\") | .DestroyedEnemyVehicles[] | select(.Enemy.BaseId==$line) | .TotalKills" | awk '{total+=$1}END{print total}'`
+		tmp=`cat tmpH5/gameEnTraitement.tmp | jq ".PlayerStats[] | select(.Player.Gamertag==\"$1\") | .DestroyedEnemyVehicles[] | select(.Enemy.BaseId==$line) | .TotalKills" | awk '{total+=$1}END{print total}'`
 		if [ ! -z "$tmp" ]
 		then
 			res=`expr $res + $tmp`
@@ -1276,7 +1296,7 @@ function getKillByEnnemy()
 	res=0
 	for line in $(cat $2)
 	do 
-		tmp=`cat gameEnTraitement | jq ".PlayerStats[] | select(.Player.Gamertag==\"$1\") | .EnemyKills[] | select(.Enemy.BaseId==$line) | .TotalKills" | awk '{total+=$1}END{print total}'`
+		tmp=`cat tmpH5/gameEnTraitement.tmp | jq ".PlayerStats[] | select(.Player.Gamertag==\"$1\") | .EnemyKills[] | select(.Enemy.BaseId==$line) | .TotalKills" | awk '{total+=$1}END{print total}'`
 		if [ ! -z "$tmp" ]
 		then
 			res=`expr $res + $tmp`
@@ -1290,54 +1310,60 @@ function getKillByEnnemy()
 #					Creation des metadatas					    #
 #####################################################################################################
 
-if [ $optionM -eq 1 ] || [ ! -e "w.std.id" ] || [ ! -e "id.e.unsc" ] || [ ! -e "id.e.covy" ] || [ ! -e "id.e.pro" ] || [ ! -e "id.vehicule" ] || [ ! -e "tooFastForYou.id" ] || [ ! -e "notSoFast.id" ] || [ ! -e "theReaper.id" ] || [ ! -e "forgotToPayTheToll.id" ] || [ ! -e "notSoTough.id" ] || [ ! -e "lucky.id" ] || [ ! -e "tillSomeoneLosesAnEye.id" ] || [ ! -e "fromDowntown.id" ] || [ ! -e "firstStrike.id" ] || [ ! -e "bodyGuard.id" ] || [ ! -e "grandTheft.id" ] || [ ! -e "almostDoesntCount.id" ] || [ ! -e "kickingItOldSchool.id" ] || [ ! -e "lawnmower.id" ] || [ ! -e "imJustPerfect.id" ] || [ ! -e "isThereNoOneElse.id" ] || [ ! -e "itsAbird.id" ] || [ ! -e "roadTrip.id" ]
+if [ $optionM -eq 1 ] || [ ! -d "metadataH5" ] || [ ! -e "metadataH5/w.std.id" ] || [ ! -e "metadataH5/id.e.unsc" ] || [ ! -e "metadataH5/id.e.covy" ] || [ ! -e "metadataH5/id.e.pro" ] || [ ! -e "metadataH5/id.vehicule" ] || [ ! -e "metadataH5/tooFastForYou.id" ] || [ ! -e "metadataH5/notSoFast.id" ] || [ ! -e "metadataH5/theReaper.id" ] || [ ! -e "metadataH5/forgotToPayTheToll.id" ] || [ ! -e "metadataH5/notSoTough.id" ] || [ ! -e "metadataH5/lucky.id" ] || [ ! -e "metadataH5/tillSomeoneLosesAnEye.id" ] || [ ! -e "metadataH5/fromDowntown.id" ] || [ ! -e "metadataH5/firstStrike.id" ] || [ ! -e "metadataH5/bodyGuard.id" ] || [ ! -e "metadataH5/grandTheft.id" ] || [ ! -e "metadataH5/almostDoesntCount.id" ] || [ ! -e "metadataH5/kickingItOldSchool.id" ] || [ ! -e "metadataH5/lawnmower.id" ] || [ ! -e "metadataH5/imJustPerfect.id" ] || [ ! -e "metadataH5/isThereNoOneElse.id" ] || [ ! -e "metadataH5/itsAbird.id" ] || [ ! -e "metadataH5/roadTrip.id" ]
 then
+
+	if [ ! -d "metadataH5" ]
+	then
+		mkdir metadataH5
+	fi
+
 	# Creation des metadata des armes
 	startTime=$(($(date +%s%N)/1000000))
-	handleCurlError "https://www.haloapi.com/metadata/h5/metadata/weapons" "weapon.metadata"
-	cat weapon.metadata | jq -r '.[] | select(.type=="Standard") | .id' > w.std.id
+	handleCurlError "https://www.haloapi.com/metadata/h5/metadata/weapons" "metadataH5/weapon.metadata"
+	cat metadataH5/weapon.metadata | jq -r '.[] | select(.type=="Standard") | .id' > metadataH5/w.std.id
 	waitOneS $startTime
 
 	# Creation des metadata des ennemis
 	startTime=$(($(date +%s%N)/1000000))
-	handleCurlError "https://www.haloapi.com/metadata/h5/metadata/enemies" "enemies.metadata"
-	cat enemies.metadata | jq -r '.[] | select(.faction=="Unsc") | .id' > id.e.unsc
-	cat enemies.metadata | jq -r '.[] | select(.faction=="Covenant") | .id' > id.e.covy
-	cat enemies.metadata | jq -r '.[] | select(.faction=="Promethean") | .id' > id.e.pro
+	handleCurlError "https://www.haloapi.com/metadata/h5/metadata/enemies" "metadataH5/enemies.metadata"
+	cat metadataH5/enemies.metadata | jq -r '.[] | select(.faction=="Unsc") | .id' > metadataH5/id.e.unsc
+	cat metadataH5/enemies.metadata | jq -r '.[] | select(.faction=="Covenant") | .id' > metadataH5/id.e.covy
+	cat metadataH5/enemies.metadata | jq -r '.[] | select(.faction=="Promethean") | .id' > metadataH5/id.e.pro
 	waitOneS $startTime
 
 	# Creation des metadata des vehicules
 	startTime=$(($(date +%s%N)/1000000))
-	handleCurlError "https://www.haloapi.com/metadata/h5/metadata/vehicles" "vehicles.metadata"
-	cat vehicles.metadata | jq -r '.[] | .id' > id.vehicule
+	handleCurlError "https://www.haloapi.com/metadata/h5/metadata/vehicles" "metadataH5/vehicles.metadata"
+	cat metadataH5/vehicles.metadata | jq -r '.[] | .id' > metadataH5/id.vehicule
 
 	# Creation des fichier de medailles
-	printf "2782465081" > tooFastForYou.id
-	printf "281002471" > notSoFast.id
-	printf "285057226" > theReaper.id
-	printf "4204396686" > forgotToPayTheToll.id
-	printf "3703205413\n1524161777\n4164420745" > notSoTough.id
-	printf "2531822079\n2494364276\n3601671677\n3786961025" > lucky.id
-	printf "2093481574\n3486286344\n1986137636\n848240062" > tillSomeoneLosesAnEye.id
-	printf "1423504140\n651116095\n882267095" > fromDowntown.id
-	printf "3001183151" > firstStrike.id
-	printf "2838259753\n352859864" > bodyGuard.id
-	printf "1219497744\n1801925525" > grandTheft.id
-	printf "3400287617" > almostDoesntCount.id
-	printf "685960231\n1618319591\n2683910456" > kickingItOldSchool.id
-	printf "3676723563" > lawnmower.id
-	printf "3992195104\n3098362934\n2279899989\n370413844\n3653057799\n1080468863" > imJustPerfect.id
-	printf "2763748638\n3710519250\n317993761\n1807727172\n343942800\n565087105\n3033979855\n1492451766" > isThereNoOneElse.id
+	printf "2782465081" > metadataH5/tooFastForYou.id
+	printf "281002471" > metadataH5/notSoFast.id
+	printf "285057226" > metadataH5/theReaper.id
+	printf "4204396686" > metadataH5/forgotToPayTheToll.id
+	printf "3703205413\n1524161777\n4164420745" > metadataH5/notSoTough.id
+	printf "2531822079\n2494364276\n3601671677\n3786961025" > metadataH5/lucky.id
+	printf "2093481574\n3486286344\n1986137636\n848240062" > metadataH5/tillSomeoneLosesAnEye.id
+	printf "1423504140\n651116095\n882267095" > metadataH5/fromDowntown.id
+	printf "3001183151" > metadataH5/firstStrike.id
+	printf "2838259753\n352859864" > metadataH5/bodyGuard.id
+	printf "1219497744\n1801925525" > metadataH5/grandTheft.id
+	printf "3400287617" > metadataH5/almostDoesntCount.id
+	printf "685960231\n1618319591\n2683910456" > metadataH5/kickingItOldSchool.id
+	printf "3676723563" > metadataH5/lawnmower.id
+	printf "3992195104\n3098362934\n2279899989\n370413844\n3653057799\n1080468863" > metadataH5/imJustPerfect.id
+	printf "2763748638\n3710519250\n317993761\n1807727172\n343942800\n565087105\n3033979855\n1492451766" > metadataH5/isThereNoOneElse.id
 
 	# Creation des fichiers d'armes de type vehicule
-	printf "419783896\n3394982816" > itsAbird.id
-	printf "1730553442\n3227919741\n1206711506\n4028516791\n3010146366\n1063919886\n1977724336" > roadTrip.id
+	printf "419783896\n3394982816" > metadataH5/itsAbird.id
+	printf "1730553442\n3227919741\n1206711506\n4028516791\n3010146366\n1063919886\n1977724336" > metadataH5/roadTrip.id
 
 	waitOneS $startTime
 fi
 
 
-for playerToTrack in $(cat tmp.file.players)
+for playerToTrack in $(cat tmpH5/file.players.tmp)
 do 
 	gamertag=`echo $playerToTrack | cut -d ';' -f 1`
 	startDate=`echo $playerToTrack | cut -d ';' -f 2`
@@ -1355,7 +1381,7 @@ do
 	#						Start Timer					    #
 	#####################################################################################################
 
-	echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) start tracking $gamertag" >> time
+	echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) start tracking $gamertag" >> logsH5/time
 
 	#####################################################################################################
 	#					Debut du traitement					    #
@@ -1421,7 +1447,7 @@ do
 
 		if [ $startDateSeconde -gt $nowSeconde ] || [ $startDateSeconde -gt $endDateSeconde ]
 		then
-			echo "`date "+%Y-%m-%d_%H:%M:%S"` FATAL ERROR: Date error: $startDate (Start Date) After $endDate (End Date) or $startDate (Start Date) After Now" | tee -a compagnyScriptError.log
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` FATAL ERROR: Date error: $startDate (Start Date) After $endDate (End Date) or $startDate (Start Date) After Now" | tee -a logsH5/h5AchillesTracker.error.log
 			exit 1
 		fi
 	fi
@@ -1504,7 +1530,7 @@ do
 	for i in `seq 0 $nbrPage`
 	do
 		startTime=$(($(date +%s%N)/1000000))
-		handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$relativeStart&count=$maxCount" "listeGame.$i"
+		handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$relativeStart&count=$maxCount" "tmpH5/listeGame.$i.tmp"
 		relativeStart=$(($relativeStart-$maxCount))
 		waitOneS $startTime 250
 	done
@@ -1513,27 +1539,27 @@ do
 	then
 		j=$(($nbrPage+1))
 		startTime=$(($(date +%s%N)/1000000))
-		handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=0&count=$restCount" "listeGame.$j"
+		handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=0&count=$restCount" "tmpH5/listeGame.$j.tmp"
 		waitOneS $startTime 250
 	fi
 
 	for i in `seq 0 $j`
 	do
-		cat listeGame.$i | jq -r '.Results[] | .Id | select(.GameMode==1) | .MatchId' >> listeGameArena
+		cat tmpH5/listeGame.$i.tmp | jq -r '.Results[] | .Id | select(.GameMode==1) | .MatchId' >> tmpH5/listeGameArena.tmp
 	done
 
 	for i in `seq 0 $j`
 	do
-		cat listeGame.$i | jq -r '.Results[] | .Id | select(.GameMode==4) | .MatchId' >> listeGameWarzone
+		cat tmpH5/listeGame.$i.tmp | jq -r '.Results[] | .Id | select(.GameMode==4) | .MatchId' >> tmpH5/listeGameWarzone.tmp
 	done
 
-	rm listeGame.*
+	rm tmpH5/listeGame.*
 
 	#####################################################################################################
 	#					Déclaration des variables				    #
 	#####################################################################################################
-	nbrGameWar=`cat listeGameWarzone | wc -l`
-	nbrGameArena=`cat listeGameArena | wc -l`
+	nbrGameWar=`cat tmpH5/listeGameWarzone.tmp | wc -l`
+	nbrGameArena=`cat tmpH5/listeGameArena.tmp | wc -l`
 	tooFastForYou=0
 	notSoFast=0
 	theReaper=0
@@ -1574,11 +1600,11 @@ do
 	do
 		if [ $mode -eq 1 ]
 		then
-			fileGame="listeGameArena"
+			fileGame="tmpH5/listeGameArena.tmp"
 			modeName="arena"
 			nbrGameMode=$nbrGameArena
 		else
-			fileGame="listeGameWarzone"
+			fileGame="tmpH5/listeGameWarzone.tmp"
 			modeName="warzone"
 			nbrGameMode=$nbrGameWar
 		fi
@@ -1588,7 +1614,7 @@ do
 		do 
 			trackingProgress=`expr $trackingProgress + 1`
 			startTime=$(($(date +%s%N)/1000000))
-			handleCurlError "https://www.haloapi.com/stats/h5/$modeName/matches/$line" "gameEnTraitement"
+			handleCurlError "https://www.haloapi.com/stats/h5/$modeName/matches/$line" "tmpH5/gameEnTraitement.tmp"
 
 			tmp=`getNbrMedaille "$gamertag" 'tooFastForYou'`
 			tooFastForYou=`expr $tooFastForYou + $tmp`
@@ -1605,7 +1631,7 @@ do
 			tmp=`getNbrMedaille "$gamertag" 'notSoTough'`
 			notSoTough=`expr $notSoTough + $tmp`
 
-			tmp=`getKillByEnnemy "$gamertag" "id.e.unsc"`
+			tmp=`getKillByEnnemy "$gamertag" "metadataH5/id.e.unsc"`
 			sorryMate=`expr $sorryMate + $tmp`
 
 			tmp=`getNbrMedaille "$gamertag" 'lucky'`
@@ -1617,10 +1643,10 @@ do
 			tmp=`getNbrMedaille "$gamertag" 'tillSomeoneLosesAnEye'`
 			tillSomeoneLosesAnEye=`expr $tillSomeoneLosesAnEye + $tmp`
 
-			tmp=`getKillByEnnemy "$gamertag" "id.e.covy"`
+			tmp=`getKillByEnnemy "$gamertag" "metadataH5/id.e.covy"`
 			cantWeAlong=`expr $cantWeAlong + $tmp`
 
-			tmp=`getKillByEnnemy "$gamertag" "id.e.pro"`
+			tmp=`getKillByEnnemy "$gamertag" "metadataH5/id.e.pro"`
 			deconstructed=`expr $deconstructed + $tmp`
 
 			tmp=`getKillByWeapons "$gamertag" 'w.std'`
@@ -1684,38 +1710,38 @@ do
 			lookMaNoPin=`expr $lookMaNoPin + $tmp`
 	
 
-			echo "tooFastForYou: $tooFastForYou" >> liveTracking.log.tmp
-			echo "notSoFast: $notSoFast" >> liveTracking.log.tmp
-			echo "theReaper: $theReaper" >> liveTracking.log.tmp
-			echo "forgotToPayTheToll: $forgotToPayTheToll" >> liveTracking.log.tmp
-			echo "notSoTough: $notSoTough" >> liveTracking.log.tmp
-			echo "sorryMate: $sorryMate" >> liveTracking.log.tmp
-			echo "lucky: $lucky" >> liveTracking.log.tmp
-			echo "fromTheTopRope: $fromTheTopRope" >> liveTracking.log.tmp
-			echo "tillSomeoneLosesAnEye: $tillSomeoneLosesAnEye" >> liveTracking.log.tmp
-			echo "cantWeAlong: $cantWeAlong" >> liveTracking.log.tmp
-			echo "deconstructed: $deconstructed" >> liveTracking.log.tmp
-			echo "standardIssue: $standardIssue" >> liveTracking.log.tmp
-			echo "fromDowntown: $fromDowntown" >> liveTracking.log.tmp
-			echo "firstStrike: $firstStrike" >> liveTracking.log.tmp
-			echo "itsAbird: $itsAbird" >> liveTracking.log.tmp
-			echo "bodyGuard: $bodyGuard" >> liveTracking.log.tmp
-			echo "grandTheft: $grandTheft" >> liveTracking.log.tmp
-			echo "almostDoesntCount: $almostDoesntCount" >> liveTracking.log.tmp
-			echo "kickingItOldSchool: $kickingItOldSchool" >> liveTracking.log.tmp
-			echo "noHardFeelings: $noHardFeelings" >> liveTracking.log.tmp
-			echo "lawnmower: $lawnmower" >> liveTracking.log.tmp
-			echo "vandalism: $vandalism" >> liveTracking.log.tmp
-			echo "thePainTrain: $thePainTrain" >> liveTracking.log.tmp
-			echo "powerPlay: $powerPlay" >> liveTracking.log.tmp
-			echo "imJustPerfect: $imJustPerfect" >> liveTracking.log.tmp
-			echo "isThereNoOneElse: $isThereNoOneElse" >> liveTracking.log.tmp
-			echo "stingLikeAbee: $stingLikeAbee" >> liveTracking.log.tmp
-			echo "soCuddly: $soCuddly" >> liveTracking.log.tmp
-			echo "roadTrip: $roadTrip" >> liveTracking.log.tmp
-			echo "somethingOnYourFace: $somethingOnYourFace" >> liveTracking.log.tmp
-			echo "lookMaNoPin: $lookMaNoPin" >> liveTracking.log.tmp
-			echo "$modeName progress: $trackingProgress/$nbrGameMode" >> liveTracking.log.tmp
+			echo "tooFastForYou: $tooFastForYou" >> logsH5/liveTracking.tmp.log
+			echo "notSoFast: $notSoFast" >> logsH5/liveTracking.tmp.log
+			echo "theReaper: $theReaper" >> logsH5/liveTracking.tmp.log
+			echo "forgotToPayTheToll: $forgotToPayTheToll" >> logsH5/liveTracking.tmp.log
+			echo "notSoTough: $notSoTough" >> logsH5/liveTracking.tmp.log
+			echo "sorryMate: $sorryMate" >> logsH5/liveTracking.tmp.log
+			echo "lucky: $lucky" >> logsH5/liveTracking.tmp.log
+			echo "fromTheTopRope: $fromTheTopRope" >> logsH5/liveTracking.tmp.log
+			echo "tillSomeoneLosesAnEye: $tillSomeoneLosesAnEye" >> logsH5/liveTracking.tmp.log
+			echo "cantWeAlong: $cantWeAlong" >> logsH5/liveTracking.tmp.log
+			echo "deconstructed: $deconstructed" >> logsH5/liveTracking.tmp.log
+			echo "standardIssue: $standardIssue" >> logsH5/liveTracking.tmp.log
+			echo "fromDowntown: $fromDowntown" >> logsH5/liveTracking.tmp.log
+			echo "firstStrike: $firstStrike" >> logsH5/liveTracking.tmp.log
+			echo "itsAbird: $itsAbird" >> logsH5/liveTracking.tmp.log
+			echo "bodyGuard: $bodyGuard" >> logsH5/liveTracking.tmp.log
+			echo "grandTheft: $grandTheft" >> logsH5/liveTracking.tmp.log
+			echo "almostDoesntCount: $almostDoesntCount" >> logsH5/liveTracking.tmp.log
+			echo "kickingItOldSchool: $kickingItOldSchool" >> logsH5/liveTracking.tmp.log
+			echo "noHardFeelings: $noHardFeelings" >> logsH5/liveTracking.tmp.log
+			echo "lawnmower: $lawnmower" >> logsH5/liveTracking.tmp.log
+			echo "vandalism: $vandalism" >> logsH5/liveTracking.tmp.log
+			echo "thePainTrain: $thePainTrain" >> logsH5/liveTracking.tmp.log
+			echo "powerPlay: $powerPlay" >> logsH5/liveTracking.tmp.log
+			echo "imJustPerfect: $imJustPerfect" >> logsH5/liveTracking.tmp.log
+			echo "isThereNoOneElse: $isThereNoOneElse" >> logsH5/liveTracking.tmp.log
+			echo "stingLikeAbee: $stingLikeAbee" >> logsH5/liveTracking.tmp.log
+			echo "soCuddly: $soCuddly" >> logsH5/liveTracking.tmp.log
+			echo "roadTrip: $roadTrip" >> logsH5/liveTracking.tmp.log
+			echo "somethingOnYourFace: $somethingOnYourFace" >> logsH5/liveTracking.tmp.log
+			echo "lookMaNoPin: $lookMaNoPin" >> logsH5/liveTracking.tmp.log
+			echo "$modeName progress: $trackingProgress/$nbrGameMode" >> logsH5/liveTracking.tmp.log
 
 			waitOneS $startTime
 		done
@@ -1729,21 +1755,21 @@ do
 	#					Nettoyage des fichiers					    #
 	#####################################################################################################
 
-	rm listeGame*
-	rm liveTracking.log.tmp
+	rm tmpH5/listeGame*
+	rm logsH5/liveTracking.tmp.log
 
 	#####################################################################################################
 	#				Création / Modification du fichier résultat		    	    #
 	#####################################################################################################
 
-	if [ ! -e "stat.file" ] || [ `cat stat.file | wc -l` -eq 0 ]
+	if [ ! -e "h5AchillesTracker.statistique" ] || [ `cat h5AchillesTracker.statistique | wc -l` -eq 0 ]
 	then
-		echo "INTERN ID;GAMERTAG;DATE FIRST GAME TRACKING;NUMBER GAME WARZONE;NUMBER GAME ARENA;TOO FAST FOR YOU;NOT SO FAST;THE REAPER;FORGOT TO PAY THE TOLL;NOT SO TOUGH;SORRY MATE;LUCKY;FROM THE TOP ROPE;TILL SOMEONE LOSES AN EYE;CAN'T WE GET ALONG?;DECONSTRUCTED;STANDARD ISSUE;FROM DOWNTOWN;FIRST STRIKE;IT'S A BIRD!;BODY GUARD;GRAND THEFT;ALMOST DOESN'T COUNT;KICKING IT OLD SCHOOL;NO HARD FEELINGS;LAWNMOWER;VANDALISM;THE PAIN TRAIN;POWER PLAY;I'M JUST PERFECT;IS THERE NO ONE ELSE?;STING LIKE A BEE;SO CUDDLY;ROAD TRIP;SOMETHING ON YOUR FACE;LOOK MA NO PIN;Last Update (GMT +0);Date last game tracking (GMT +0);Last game tracking STRING;Description Last game tracking" >> stat.file
+		echo "INTERN ID;GAMERTAG;DATE FIRST GAME TRACKING;NUMBER GAME WARZONE;NUMBER GAME ARENA;TOO FAST FOR YOU;NOT SO FAST;THE REAPER;FORGOT TO PAY THE TOLL;NOT SO TOUGH;SORRY MATE;LUCKY;FROM THE TOP ROPE;TILL SOMEONE LOSES AN EYE;CAN'T WE GET ALONG?;DECONSTRUCTED;STANDARD ISSUE;FROM DOWNTOWN;FIRST STRIKE;IT'S A BIRD!;BODY GUARD;GRAND THEFT;ALMOST DOESN'T COUNT;KICKING IT OLD SCHOOL;NO HARD FEELINGS;LAWNMOWER;VANDALISM;THE PAIN TRAIN;POWER PLAY;I'M JUST PERFECT;IS THERE NO ONE ELSE?;STING LIKE A BEE;SO CUDDLY;ROAD TRIP;SOMETHING ON YOUR FACE;LOOK MA NO PIN;Last Update (GMT +0);Date last game tracking (GMT +0);Last game tracking STRING;Description Last game tracking" >> h5AchillesTracker.statistique
 	fi
 
 	if [ $optionR -eq 1 ]
 	then
-		oldValues=`cat stat.file | grep $internId`
+		oldValues=`cat h5AchillesTracker.statistique | grep $internId`
 
 		let nbrGameWar="$nbrGameWar + `echo $oldValues | cut -d ';' -f 4`"
 		let nbrGameArena="$nbrGameArena + `echo $oldValues | cut -d ';' -f 5`"
@@ -1779,15 +1805,15 @@ do
 		let somethingOnYourFace="$somethingOnYourFace + `echo $oldValues | cut -d ';' -f 35`"
 		let lookMaNoPin="$lookMaNoPin + `echo $oldValues | cut -d ';' -f 36`"
 
-		sed -i "`cat stat.file | grep -n $internId | cut -d ':' -f 1`s/.*/$internId;$gamertag;`echo $oldValues | cut -d ';' -f 3`;$nbrGameWar;$nbrGameArena;$tooFastForYou;$notSoFast;$theReaper;$forgotToPayTheToll;$notSoTough;$sorryMate;$lucky;$fromTheTopRope;$tillSomeoneLosesAnEye;$cantWeAlong;$deconstructed;$standardIssue;$fromDowntown;$firstStrike;$itsAbird;$bodyGuard;$grandTheft;$almostDoesntCount;$kickingItOldSchool;$noHardFeelings;$lawnmower;$vandalism;$thePainTrain;$powerPlay;$imJustPerfect;$isThereNoOneElse;$stingLikeAbee;$soCuddly;$roadTrip;$somethingOnYourFace;$lookMaNoPin;$nowdate;$dateLastGame;$idLastGame;/" stat.file
+		sed -i "`cat h5AchillesTracker.statistique | grep -n $internId | cut -d ':' -f 1`s/.*/$internId;$gamertag;`echo $oldValues | cut -d ';' -f 3`;$nbrGameWar;$nbrGameArena;$tooFastForYou;$notSoFast;$theReaper;$forgotToPayTheToll;$notSoTough;$sorryMate;$lucky;$fromTheTopRope;$tillSomeoneLosesAnEye;$cantWeAlong;$deconstructed;$standardIssue;$fromDowntown;$firstStrike;$itsAbird;$bodyGuard;$grandTheft;$almostDoesntCount;$kickingItOldSchool;$noHardFeelings;$lawnmower;$vandalism;$thePainTrain;$powerPlay;$imJustPerfect;$isThereNoOneElse;$stingLikeAbee;$soCuddly;$roadTrip;$somethingOnYourFace;$lookMaNoPin;$nowdate;$dateLastGame;$idLastGame;/" h5AchillesTracker.statistique
 	else
-		newInternId=`cat stat.file | wc -l`
-		echo "IID-$newInternId-;$gamertag;$startDate;$nbrGameWar;$nbrGameArena;$tooFastForYou;$notSoFast;$theReaper;$forgotToPayTheToll;$notSoTough;$sorryMate;$lucky;$fromTheTopRope;$tillSomeoneLosesAnEye;$cantWeAlong;$deconstructed;$standardIssue;$fromDowntown;$firstStrike;$itsAbird;$bodyGuard;$grandTheft;$almostDoesntCount;$kickingItOldSchool;$noHardFeelings;$lawnmower;$vandalism;$thePainTrain;$powerPlay;$imJustPerfect;$isThereNoOneElse;$stingLikeAbee;$soCuddly;$roadTrip;$somethingOnYourFace;$lookMaNoPin;$nowdate;$dateLastGame;$idLastGame;" >> stat.file
+		newInternId=`cat h5AchillesTracker.statistique | wc -l`
+		echo "IID-$newInternId-;$gamertag;$startDate;$nbrGameWar;$nbrGameArena;$tooFastForYou;$notSoFast;$theReaper;$forgotToPayTheToll;$notSoTough;$sorryMate;$lucky;$fromTheTopRope;$tillSomeoneLosesAnEye;$cantWeAlong;$deconstructed;$standardIssue;$fromDowntown;$firstStrike;$itsAbird;$bodyGuard;$grandTheft;$almostDoesntCount;$kickingItOldSchool;$noHardFeelings;$lawnmower;$vandalism;$thePainTrain;$powerPlay;$imJustPerfect;$isThereNoOneElse;$stingLikeAbee;$soCuddly;$roadTrip;$somethingOnYourFace;$lookMaNoPin;$nowdate;$dateLastGame;$idLastGame;" >> h5AchillesTracker.statistique
 	fi
 	#####################################################################################################
 	#						End Timer					    #
 	#####################################################################################################
-	echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) end tracking $gamertag" >> time
+	echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) end tracking $gamertag" >> logsH5/time
 done
 
-rm tmp.file.players
+rm -fr tmpH5/
