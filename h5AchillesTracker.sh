@@ -1403,6 +1403,7 @@ do
 		retourFonction=$?
 		if [ $retourFonction -eq 2 ]
 		then
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) stop tracking: $gamertag, no data to refresh" >> logsH5/time
 			continue
 		elif [ $retourFonction -ne 0 ]
 		then
