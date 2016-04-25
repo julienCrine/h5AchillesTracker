@@ -1288,7 +1288,7 @@ function getKillByEnnemy()
 #					Creation des metadatas					    #
 #####################################################################################################
 
-if [ $optionM -eq 1 ]
+if [ $optionM -eq 1 ] || [ ! -e "w.std.id" ] || [ ! -e "id.e.unsc" ] || [ ! -e "id.e.covy" ] || [ ! -e "id.e.pro" ] || [ ! -e "id.vehicule" ] || [ ! -e "tooFastForYou.id" ] || [ ! -e "notSoFast.id" ] || [ ! -e "theReaper.id" ] || [ ! -e "forgotToPayTheToll.id" ] || [ ! -e "notSoTough.id" ] || [ ! -e "lucky.id" ] || [ ! -e "tillSomeoneLosesAnEye.id" ] || [ ! -e "fromDowntown.id" ] || [ ! -e "firstStrike.id" ] || [ ! -e "bodyGuard.id" ] || [ ! -e "grandTheft.id" ] || [ ! -e "almostDoesntCount.id" ] || [ ! -e "kickingItOldSchool.id" ] || [ ! -e "lawnmower.id" ] || [ ! -e "imJustPerfect.id" ] || [ ! -e "isThereNoOneElse.id" ] || [ ! -e "itsAbird.id" ] || [ ! -e "roadTrip.id" ]
 then
 	# Creation des metadata des armes
 	startTime=$(($(date +%s%N)/1000000))
@@ -1299,9 +1299,9 @@ then
 	# Creation des metadata des ennemis
 	startTime=$(($(date +%s%N)/1000000))
 	handleCurlError "https://www.haloapi.com/metadata/h5/metadata/enemies" "enemies.metadata"
+	cat enemies.metadata | jq -r '.[] | select(.faction=="Unsc") | .id' > id.e.unsc
 	cat enemies.metadata | jq -r '.[] | select(.faction=="Covenant") | .id' > id.e.covy
 	cat enemies.metadata | jq -r '.[] | select(.faction=="Promethean") | .id' > id.e.pro
-	cat enemies.metadata | jq -r '.[] | select(.faction=="Unsc") | .id' > id.e.unsc
 	waitOneS $startTime
 
 	# Creation des metadata des vehicules
@@ -1310,26 +1310,27 @@ then
 	cat vehicles.metadata | jq -r '.[] | .id' > id.vehicule
 
 	# Creation des fichier de medailles
-	printf "2763748638\n3710519250\n317993761\n1807727172\n343942800\n565087105\n3033979855\n1492451766" > isThereNoOneElse.id
-	printf "3992195104\n3098362934\n2279899989\n370413844\n3653057799\n1080468863" > imJustPerfect.id
-	printf "3676723563" > lawnmower.id
-	printf "685960231\n1618319591\n2683910456" > kickingItOldSchool.id
-	printf "1219497744\n1801925525" > grandTheft.id
-	printf "1423504140\n651116095\n882267095" > fromDowntown.id
-	printf "2093481574\n3486286344\n1986137636\n848240062" > tillSomeoneLosesAnEye.id
-	printf "2531822079\n2494364276\n3601671677\n3786961025" > lucky.id
-	printf "3703205413\n1524161777\n4164420745" > notSoTough.id
-	printf "285057226" > theReaper.id
-	printf "281002471" > notSoFast.id
-	printf "3001183151" > firstStrike.id
 	printf "2782465081" > tooFastForYou.id
-	printf "3400287617" > almostDoesntCount.id
+	printf "281002471" > notSoFast.id
+	printf "285057226" > theReaper.id
 	printf "4204396686" > forgotToPayTheToll.id
+	printf "3703205413\n1524161777\n4164420745" > notSoTough.id
+	printf "2531822079\n2494364276\n3601671677\n3786961025" > lucky.id
+	printf "2093481574\n3486286344\n1986137636\n848240062" > tillSomeoneLosesAnEye.id
+	printf "1423504140\n651116095\n882267095" > fromDowntown.id
+	printf "3001183151" > firstStrike.id
 	printf "2838259753\n352859864" > bodyGuard.id
+	printf "1219497744\n1801925525" > grandTheft.id
+	printf "3400287617" > almostDoesntCount.id
+	printf "685960231\n1618319591\n2683910456" > kickingItOldSchool.id
+	printf "3676723563" > lawnmower.id
+	printf "3992195104\n3098362934\n2279899989\n370413844\n3653057799\n1080468863" > imJustPerfect.id
+	printf "2763748638\n3710519250\n317993761\n1807727172\n343942800\n565087105\n3033979855\n1492451766" > isThereNoOneElse.id
 
 	# Creation des fichiers d'armes de type vehicule
-	printf "1730553442\n3227919741\n1206711506\n4028516791\n3010146366\n1063919886\n1977724336" > roadTrip.id
 	printf "419783896\n3394982816" > itsAbird.id
+	printf "1730553442\n3227919741\n1206711506\n4028516791\n3010146366\n1063919886\n1977724336" > roadTrip.id
+
 	waitOneS $startTime
 fi
 
@@ -1529,94 +1530,40 @@ do
 	#####################################################################################################
 	#					Déclaration des variables				    #
 	#####################################################################################################
-
-	noHardFeelings=0
-	stingLikeAbee=0
-	somethingOnYourFace=0
-	powerPlay=0
-	standardIssue=0
-
-	lookMaNoPin=0
-	#Id Arem: 4106030681, 3190813201, 2460880172
-
-	soCuddly=0
-	#Medaille: 4116576170, 2966496172
-
-	thePainTrain=0
-	#Medaille: 298813630
-
-	fromTheRope=0
-	#Medaille: 492192256
-
-	isThereNoOneElse=0
-	#Medaille: 2763748638, 3710519250, 317993761, 1807727172, 343942800, 565087105, 3033979855, 1492451766
-
-	imJustPerfect=0
-	#Medaille: 3992195104, 3098362934, 2279899989, 370413844, 3653057799, 1080468863
-
-	lawnmower=0
-	#Medaille: 3676723563
-
-	kickingItOldSchool=0
-	# BXR, Nade Shot, Noob Combo (OldSchool)
-	#Medaille: 685960231, 1618319591, 2683910456
-
-	grandTheft=0
-	#Medaille: 1219497744, 1801925525
-
-	itsAbird=0
-	#Arme: 419783896, 3394982816
-
-	fromDowntown=0
-	#Medaille: 1423504140, 651116095, 882267095
-
-	tillSomeoneLosesAnEye=0
-	#Medaille: 2093481574, 3486286344, 1986137636, 848240062
-
-	lucky=0
-	#Medaille: 2531822079, 2494364276, 3601671677, 3786961025
-
-	notSoTough=0
-	#Medaille: 3703205413, 1524161777, 4164420745
-
-	theReaper=0
-	#Medaille: 285057226
-
-	notSoFast=0
-	#Medaille: 281002471
-
-	firstStrike=0
-	#Medaille: 3001183151
-
-	roadTrip=0
-
-	tooFastForYou=0
-	#Medaille: 2782465081
-
-	almostDoesntCount=0
-	#Medaille: 3400287617
-
-	forgotToPayTheToll=0
-	#Medaille: 4204396686
-
-	bodyGuard=0
-	#Medaille: 2838259753, 352859864
-
-	cantWeAlong=0
-	#Id Ennemy: 2625192795, 3134866799, 3802316732, 2957796559
-
-	deconstructed=0
-	#Id Ennemy: 2631958027, 123080854, 3843549056, 3541732101, 2497647768
-
-	sorryMate=0
-	#ID ennemy: 724440388
-
-	vandalism=0
-
 	nbrGameWar=`cat listeGameWarzone | wc -l`
-
 	nbrGameArena=`cat listeGameArena | wc -l`
-
+	tooFastForYou=0
+	notSoFast=0
+	theReaper=0
+	forgotToPayTheToll=0
+	notSoTough=0
+	sorryMate=0
+	lucky=0
+	fromTheTopRope=0
+	tillSomeoneLosesAnEye=0
+	cantWeAlong=0
+	deconstructed=0
+	standardIssue=0
+	fromDowntown=0
+	firstStrike=0
+	itsAbird=0
+	bodyGuard=0
+	grandTheft=0
+	almostDoesntCount=0
+	kickingItOldSchool=0
+	noHardFeelings=0
+	lawnmower=0
+	vandalism=0
+	thePainTrain=0
+	powerPlay=0
+	imJustPerfect=0
+	isThereNoOneElse=0
+	stingLikeAbee=0
+	soCuddly=0
+	roadTrip=0
+	somethingOnYourFace=0
+	lookMaNoPin=0
+	
 	#####################################################################################################
 	#					Traitement des games					    #
 	#####################################################################################################
@@ -1641,86 +1588,32 @@ do
 			startTime=$(($(date +%s%N)/1000000))
 			handleCurlError "https://www.haloapi.com/stats/h5/$modeName/matches/$line" "gameEnTraitement"
 
-			tmp=`getStandardGameInfo 'TotalSpartanKills' "$gamertag"`
-			noHardFeelings=`expr $noHardFeelings + $tmp`
-
-			tmp=`getStandardGameInfo 'TotalMeleeKills' "$gamertag"`
-			stingLikeAbee=`expr $stingLikeAbee + $tmp`
-
-			tmp=`getStandardGameInfo 'TotalHeadshots' "$gamertag"`
-			somethingOnYourFace=`expr $somethingOnYourFace + $tmp`
-
-			tmp=`getStandardGameInfo 'TotalGrenadeKills' "$gamertag"`
-			lookMaNoPin=`expr $lookMaNoPin + $tmp`
-
-			tmp=`getStandardGameInfo 'TotalPowerWeaponKills' "$gamertag"`
-			powerPlay=`expr $powerPlay + $tmp`
-
-			tmp=`getStandardGameInfo 'TotalAssassinations' "$gamertag"`
-			soCuddly=`expr $soCuddly + $tmp`
-
-			tmp=`getStandardGameInfo 'TotalShoulderBashKills' "$gamertag"`
-			thePainTrain=`expr $thePainTrain + $tmp`
-
-			tmp=`getStandardGameInfo 'TotalGroundPoundKills' "$gamertag"`
-			fromTheRope=`expr $fromTheRope + $tmp`
-
-			tmp=`getKillByWeapons "$gamertag" 'w.std'`
-			standardIssue=`expr $standardIssue + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'isThereNoOneElse'`
-			isThereNoOneElse=`expr $isThereNoOneElse + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'imJustPerfect'`
-			imJustPerfect=`expr $imJustPerfect + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'lawnmower'`
-			lawnmower=`expr $lawnmower + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'kickingItOldSchool'`
-			kickingItOldSchool=`expr $kickingItOldSchool + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'grandTheft'`
-			grandTheft=`expr $grandTheft + $tmp`
-
-			tmp=`getKillByWeapons "$gamertag" 'itsAbird'`
-			itsAbird=`expr $itsAbird + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'fromDowntown'`
-			fromDowntown=`expr $fromDowntown + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'tillSomeoneLosesAnEye'`
-			tillSomeoneLosesAnEye=`expr $tillSomeoneLosesAnEye + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'lucky'`
-			lucky=`expr $lucky + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'notSoTough'`
-			notSoTough=`expr $notSoTough + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'theReaper'`
-			theReaper=`expr $theReaper + $tmp`
+			tmp=`getNbrMedaille "$gamertag" 'tooFastForYou'`
+			tooFastForYou=`expr $tooFastForYou + $tmp`
 
 			tmp=`getNbrMedaille "$gamertag" 'notSoFast'`
 			notSoFast=`expr $notSoFast + $tmp`
 
-			tmp=`getNbrMedaille "$gamertag" 'firstStrike'`
-			firstStrike=`expr $firstStrike + $tmp`
-
-			tmp=`getKillByWeapons "$gamertag" 'roadTrip'`
-			roadTrip=`expr $roadTrip + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'tooFastForYou'`
-			tooFastForYou=`expr $tooFastForYou + $tmp`
-
-			tmp=`getNbrMedaille "$gamertag" 'almostDoesntCount'`
-			almostDoesntCount=`expr $almostDoesntCount + $tmp`
+			tmp=`getNbrMedaille "$gamertag" 'theReaper'`
+			theReaper=`expr $theReaper + $tmp`
 
 			tmp=`getNbrMedaille "$gamertag" 'forgotToPayTheToll'`
 			forgotToPayTheToll=`expr $forgotToPayTheToll + $tmp`
 
-			tmp=`getNbrMedaille "$gamertag" 'bodyGuard'`
-			bodyGuard=`expr $bodyGuard + $tmp`
+			tmp=`getNbrMedaille "$gamertag" 'notSoTough'`
+			notSoTough=`expr $notSoTough + $tmp`
+
+			tmp=`getKillByEnnemy "$gamertag" "id.e.unsc"`
+			sorryMate=`expr $sorryMate + $tmp`
+
+			tmp=`getNbrMedaille "$gamertag" 'lucky'`
+			lucky=`expr $lucky + $tmp`
+
+			tmp=`getStandardGameInfo 'TotalGroundPoundKills' "$gamertag"`
+			fromTheTopRope=`expr $fromTheTopRope + $tmp`
+
+			tmp=`getNbrMedaille "$gamertag" 'tillSomeoneLosesAnEye'`
+			tillSomeoneLosesAnEye=`expr $tillSomeoneLosesAnEye + $tmp`
 
 			tmp=`getKillByEnnemy "$gamertag" "id.e.covy"`
 			cantWeAlong=`expr $cantWeAlong + $tmp`
@@ -1728,48 +1621,98 @@ do
 			tmp=`getKillByEnnemy "$gamertag" "id.e.pro"`
 			deconstructed=`expr $deconstructed + $tmp`
 
-			tmp=`getKillByEnnemy "$gamertag" "id.e.unsc"`
-			sorryMate=`expr $sorryMate + $tmp`
+			tmp=`getKillByWeapons "$gamertag" 'w.std'`
+			standardIssue=`expr $standardIssue + $tmp`
+
+			tmp=`getNbrMedaille "$gamertag" 'fromDowntown'`
+			fromDowntown=`expr $fromDowntown + $tmp`
+
+			tmp=`getNbrMedaille "$gamertag" 'firstStrike'`
+			firstStrike=`expr $firstStrike + $tmp`
+
+			tmp=`getKillByWeapons "$gamertag" 'itsAbird'`
+			itsAbird=`expr $itsAbird + $tmp`
+
+			tmp=`getNbrMedaille "$gamertag" 'bodyGuard'`
+			bodyGuard=`expr $bodyGuard + $tmp`
+
+			tmp=`getNbrMedaille "$gamertag" 'grandTheft'`
+			grandTheft=`expr $grandTheft + $tmp`
+
+			tmp=`getNbrMedaille "$gamertag" 'almostDoesntCount'`
+			almostDoesntCount=`expr $almostDoesntCount + $tmp`
+
+			tmp=`getNbrMedaille "$gamertag" 'kickingItOldSchool'`
+			kickingItOldSchool=`expr $kickingItOldSchool + $tmp`
+
+			tmp=`getStandardGameInfo 'TotalSpartanKills' "$gamertag"`
+			noHardFeelings=`expr $noHardFeelings + $tmp`
+
+			tmp=`getNbrMedaille "$gamertag" 'lawnmower'`
+			lawnmower=`expr $lawnmower + $tmp`
 
 			tmp=`getVehiculeDestroy "$gamertag"`
 			vandalism=`expr $vandalism + $tmp`
-	
-			echo "noHardFeelings: $noHardFeelings" >> liveTracking.log.tmp
-			echo "somethingOnYourFace: $somethingOnYourFace" >> liveTracking.log.tmp
-	
-			echo "stingLikeAbee: $stingLikeAbee" >> liveTracking.log.tmp
-			echo "lookMaNoPin: $lookMaNoPin" >> liveTracking.log.tmp
-			echo "powerPlay: $powerPlay" >> liveTracking.log.tmp
-			echo "standardIssue: $standardIssue" >> liveTracking.log.tmp
 
-			echo "soCuddly: $soCuddly" >> liveTracking.log.tmp
-			echo "thePainTrain: $thePainTrain" >> liveTracking.log.tmp
-			echo "fromTheRope: $fromTheRope" >> liveTracking.log.tmp
+			tmp=`getStandardGameInfo 'TotalShoulderBashKills' "$gamertag"`
+			thePainTrain=`expr $thePainTrain + $tmp`
 
-			echo "isThereNoOneElse: $isThereNoOneElse" >> liveTracking.log.tmp
-			echo "imJustPerfect: $imJustPerfect" >> liveTracking.log.tmp
-			echo "lawnmower: $lawnmower" >> liveTracking.log.tmp
-			echo "kickingItOldSchool: $kickingItOldSchool" >> liveTracking.log.tmp
-			echo "grandTheft: $grandTheft" >> liveTracking.log.tmp
-			echo "itsAbird: $itsAbird" >> liveTracking.log.tmp
-			echo "fromDowntown: $fromDowntown" >> liveTracking.log.tmp
-			echo "tillSomeoneLosesAnEye: $tillSomeoneLosesAnEye" >> liveTracking.log.tmp
-			echo "lucky: $lucky" >> liveTracking.log.tmp
-			echo "notSoTough: $notSoTough" >> liveTracking.log.tmp
-			echo "theReaper: $theReaper" >> liveTracking.log.tmp
-			echo "notSoFast: $notSoFast" >> liveTracking.log.tmp
-			echo "firstStrike: $firstStrike" >> liveTracking.log.tmp
-			echo "roadTrip: $roadTrip" >> liveTracking.log.tmp
+			tmp=`getStandardGameInfo 'TotalPowerWeaponKills' "$gamertag"`
+			powerPlay=`expr $powerPlay + $tmp`
+
+			tmp=`getNbrMedaille "$gamertag" 'imJustPerfect'`
+			imJustPerfect=`expr $imJustPerfect + $tmp`
+
+			tmp=`getNbrMedaille "$gamertag" 'isThereNoOneElse'`
+			isThereNoOneElse=`expr $isThereNoOneElse + $tmp`
+
+			tmp=`getStandardGameInfo 'TotalMeleeKills' "$gamertag"`
+			stingLikeAbee=`expr $stingLikeAbee + $tmp`
+
+			tmp=`getStandardGameInfo 'TotalAssassinations' "$gamertag"`
+			soCuddly=`expr $soCuddly + $tmp`
+
+			tmp=`getKillByWeapons "$gamertag" 'roadTrip'`
+			roadTrip=`expr $roadTrip + $tmp`
+
+			tmp=`getStandardGameInfo 'TotalHeadshots' "$gamertag"`
+			somethingOnYourFace=`expr $somethingOnYourFace + $tmp`
+
+			tmp=`getStandardGameInfo 'TotalGrenadeKills' "$gamertag"`
+			lookMaNoPin=`expr $lookMaNoPin + $tmp`
+	
+
 			echo "tooFastForYou: $tooFastForYou" >> liveTracking.log.tmp
-			echo "almostDoesntCount: $almostDoesntCount" >> liveTracking.log.tmp
+			echo "notSoFast: $notSoFast" >> liveTracking.log.tmp
+			echo "theReaper: $theReaper" >> liveTracking.log.tmp
 			echo "forgotToPayTheToll: $forgotToPayTheToll" >> liveTracking.log.tmp
-			echo "bodyGuard: $bodyGuard" >> liveTracking.log.tmp
-
+			echo "notSoTough: $notSoTough" >> liveTracking.log.tmp
+			echo "sorryMate: $sorryMate" >> liveTracking.log.tmp
+			echo "lucky: $lucky" >> liveTracking.log.tmp
+			echo "fromTheTopRope: $fromTheTopRope" >> liveTracking.log.tmp
+			echo "tillSomeoneLosesAnEye: $tillSomeoneLosesAnEye" >> liveTracking.log.tmp
 			echo "cantWeAlong: $cantWeAlong" >> liveTracking.log.tmp
 			echo "deconstructed: $deconstructed" >> liveTracking.log.tmp
-			echo "sorryMate: $sorryMate" >> liveTracking.log.tmp
-
+			echo "standardIssue: $standardIssue" >> liveTracking.log.tmp
+			echo "fromDowntown: $fromDowntown" >> liveTracking.log.tmp
+			echo "firstStrike: $firstStrike" >> liveTracking.log.tmp
+			echo "itsAbird: $itsAbird" >> liveTracking.log.tmp
+			echo "bodyGuard: $bodyGuard" >> liveTracking.log.tmp
+			echo "grandTheft: $grandTheft" >> liveTracking.log.tmp
+			echo "almostDoesntCount: $almostDoesntCount" >> liveTracking.log.tmp
+			echo "kickingItOldSchool: $kickingItOldSchool" >> liveTracking.log.tmp
+			echo "noHardFeelings: $noHardFeelings" >> liveTracking.log.tmp
+			echo "lawnmower: $lawnmower" >> liveTracking.log.tmp
 			echo "vandalism: $vandalism" >> liveTracking.log.tmp
+			echo "thePainTrain: $thePainTrain" >> liveTracking.log.tmp
+			echo "powerPlay: $powerPlay" >> liveTracking.log.tmp
+			echo "imJustPerfect: $imJustPerfect" >> liveTracking.log.tmp
+			echo "isThereNoOneElse: $isThereNoOneElse" >> liveTracking.log.tmp
+			echo "stingLikeAbee: $stingLikeAbee" >> liveTracking.log.tmp
+			echo "soCuddly: $soCuddly" >> liveTracking.log.tmp
+			echo "roadTrip: $roadTrip" >> liveTracking.log.tmp
+			echo "somethingOnYourFace: $somethingOnYourFace" >> liveTracking.log.tmp
+			echo "lookMaNoPin: $lookMaNoPin" >> liveTracking.log.tmp
 			echo "$modeName progress: $trackingProgress/$nbrGameMode" >> liveTracking.log.tmp
 
 			waitOneS $startTime
@@ -1809,7 +1752,7 @@ do
 		let notSoTough="$notSoTough + `echo $oldValues | cut -d ';' -f 10`"
 		let sorryMate="$sorryMate + `echo $oldValues | cut -d ';' -f 11`"
 		let lucky="$lucky + `echo $oldValues | cut -d ';' -f 12`"
-		let fromTheRope="$fromTheRope + `echo $oldValues | cut -d ';' -f 13`"
+		let fromTheTopRope="$fromTheTopRope + `echo $oldValues | cut -d ';' -f 13`"
 		let tillSomeoneLosesAnEye="$tillSomeoneLosesAnEye + `echo $oldValues | cut -d ';' -f 14`"
 		let cantWeAlong="$cantWeAlong + `echo $oldValues | cut -d ';' -f 15`"
 		let deconstructed="$deconstructed + `echo $oldValues | cut -d ';' -f 16`"
@@ -1834,10 +1777,10 @@ do
 		let somethingOnYourFace="$somethingOnYourFace + `echo $oldValues | cut -d ';' -f 35`"
 		let lookMaNoPin="$lookMaNoPin + `echo $oldValues | cut -d ';' -f 36`"
 
-		sed -i "`cat stat.file | grep -n $internId | cut -d ':' -f 1`s/.*/$internId;$gamertag;`echo $oldValues | cut -d ';' -f 3`;$nbrGameWar;$nbrGameArena;$tooFastForYou;$notSoFast;$theReaper;$forgotToPayTheToll;$notSoTough;$sorryMate;$lucky;$fromTheRope;$tillSomeoneLosesAnEye;$cantWeAlong;$deconstructed;$standardIssue;$fromDowntown;$firstStrike;$itsAbird;$bodyGuard;$grandTheft;$almostDoesntCount;$kickingItOldSchool;$noHardFeelings;$lawnmower;$vandalism;$thePainTrain;$powerPlay;$imJustPerfect;$isThereNoOneElse;$stingLikeAbee;$soCuddly;$roadTrip;$somethingOnYourFace;$lookMaNoPin;$nowdate;$dateLastGame;$idLastGame;/" stat.file
+		sed -i "`cat stat.file | grep -n $internId | cut -d ':' -f 1`s/.*/$internId;$gamertag;`echo $oldValues | cut -d ';' -f 3`;$nbrGameWar;$nbrGameArena;$tooFastForYou;$notSoFast;$theReaper;$forgotToPayTheToll;$notSoTough;$sorryMate;$lucky;$fromTheTopRope;$tillSomeoneLosesAnEye;$cantWeAlong;$deconstructed;$standardIssue;$fromDowntown;$firstStrike;$itsAbird;$bodyGuard;$grandTheft;$almostDoesntCount;$kickingItOldSchool;$noHardFeelings;$lawnmower;$vandalism;$thePainTrain;$powerPlay;$imJustPerfect;$isThereNoOneElse;$stingLikeAbee;$soCuddly;$roadTrip;$somethingOnYourFace;$lookMaNoPin;$nowdate;$dateLastGame;$idLastGame;/" stat.file
 	else
 		newInternId=`cat stat.file | wc -l`
-		echo "IID-$newInternId-;$gamertag;$startDate;$nbrGameWar;$nbrGameArena;$tooFastForYou;$notSoFast;$theReaper;$forgotToPayTheToll;$notSoTough;$sorryMate;$lucky;$fromTheRope;$tillSomeoneLosesAnEye;$cantWeAlong;$deconstructed;$standardIssue;$fromDowntown;$firstStrike;$itsAbird;$bodyGuard;$grandTheft;$almostDoesntCount;$kickingItOldSchool;$noHardFeelings;$lawnmower;$vandalism;$thePainTrain;$powerPlay;$imJustPerfect;$isThereNoOneElse;$stingLikeAbee;$soCuddly;$roadTrip;$somethingOnYourFace;$lookMaNoPin;$nowdate;$dateLastGame;$idLastGame;" >> stat.file
+		echo "IID-$newInternId-;$gamertag;$startDate;$nbrGameWar;$nbrGameArena;$tooFastForYou;$notSoFast;$theReaper;$forgotToPayTheToll;$notSoTough;$sorryMate;$lucky;$fromTheTopRope;$tillSomeoneLosesAnEye;$cantWeAlong;$deconstructed;$standardIssue;$fromDowntown;$firstStrike;$itsAbird;$bodyGuard;$grandTheft;$almostDoesntCount;$kickingItOldSchool;$noHardFeelings;$lawnmower;$vandalism;$thePainTrain;$powerPlay;$imJustPerfect;$isThereNoOneElse;$stingLikeAbee;$soCuddly;$roadTrip;$somethingOnYourFace;$lookMaNoPin;$nowdate;$dateLastGame;$idLastGame;" >> stat.file
 	fi
 	#####################################################################################################
 	#						End Timer					    #
