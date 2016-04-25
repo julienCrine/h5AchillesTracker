@@ -950,7 +950,8 @@ function handleCurlError()
 			sleep $numberSecond
 		elif [ ! -z "$statusCode" ] && [ "$statusCode" = "401" ]
 		then
-			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Subscription Key is not valid ! ($SUBSCRIPTIONKEY)" >> compagnyScriptError.log
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Subscription Key is not valid ! ($SUBSCRIPTIONKEY)" | tee -a compagnyScriptError.log
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) stop tracking (ERROR, more details on log file compagnyScriptError.log)" >> time
 			exit 1
 		else		
 			atemptCurlCommand=0
