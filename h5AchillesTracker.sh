@@ -741,7 +741,7 @@ function usage()
 			echo "-r 			: [RefreshStat] Flag de rafraichissement des stats contenu dans le fichier stat.file"
 			echo "-m 			: [RefreshMetaData] Flag de rafraichissement des metadatas"
 			echo "-f [PathFile]		: En mode fichier indique l'emplacement du fichier a charger"
-			echo "-k [SubscriptionKey]	: La clef de souscription à l'API H5 343 Industries"
+			echo "-k [SubscriptionKey]	: La clef de souscription à l'API H5 343 Industries, si vous n'en avez pas procurez vous en une ici: https://developer.haloapi.com/products/560af1e42109182040fb56fc (il faut se log avec son compte xbox live)"
 			echo "-l [partOfLicence]	: Afficher une partie de la licence (warranty, affiche les garanties et conditions les conditions)"
 			echo "-h 			: Affiche l'aide"
 		else
@@ -752,7 +752,7 @@ function usage()
 			echo "-r 			: [RefreshStat] Flag to refresh stats in file stat.file"
 			echo "-m 			: [RefreshMetaData] Flag to refresh metadatas"
 			echo "-f [PathFile]		: In inpout file mode use it for pathfile"
-			echo "-k [SubscriptionKey]	: Use it for set your subscription key to 343 H5 API"
+			echo "-k [SubscriptionKey]	: Use it for set your subscription key to 343 H5 API, if you dont have one you can obtain one here: https://developer.haloapi.com/products/560af1e42109182040fb56fc (loging with xbox live account)"
 			echo "-l [partOfLicence]	: Display a part of licence (warranty, display warranty and conditions the conditions)"
 			echo "-h 			: Display Help"
 		fi
@@ -767,6 +767,7 @@ optionR=0
 optionM=0
 pathFile=""
 SUBSCRIPTIONKEY="2096ca67bcd44b47aea128c814f92df2"
+#SUBSCRIPTIONKEY="Put Your Subscription Key Here"
 
 if [ $# -eq 0 ]
 then
@@ -950,7 +951,7 @@ function handleCurlError()
 			sleep $numberSecond
 		elif [ ! -z "$statusCode" ] && [ "$statusCode" = "401" ]
 		then
-			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Subscription Key is not valid ! ($SUBSCRIPTIONKEY)" | tee -a compagnyScriptError.log
+			printf "\n\n`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Subscription Key is not valid ! (BAD KEY: $SUBSCRIPTIONKEY).\n\nFor get a valid key, you have to go here: https://developer.haloapi.com/products/560af1e42109182040fb56fc\n\nFor use your own key, you have 2 possibility:\n\n- For permanent use, you can edit the script and modify value of var SUBSCRIPTIONKEY (default: \"Put Your Subscription Key Here\") by your own key\n- You can call this script with \"-k\" option, like that: ./h5AchillesTracker -f yourFile -k yourOwnSubscriptionKey\n\n" | tee -a compagnyScriptError.log
 			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) stop tracking (ERROR, more details on log file compagnyScriptError.log)" >> time
 			exit 1
 		else		
