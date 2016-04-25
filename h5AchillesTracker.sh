@@ -696,7 +696,7 @@ IFS="
 "
 
 # Nettoyer les passages précédents
-rm listeGame* 2> /dev/null
+rm tmpH5/listeGame* 2> /dev/null
 rm logsH5/liveTracking.tmp.log 2> /dev/null
 rm tmpH5/file.players.tmp 2> /dev/null
 
@@ -1020,28 +1020,13 @@ function getStartforADAy()
 
                 	if [ $dateSecondeLastStart -eq $startDateRefSeconde ]
                 	then
-				if [ $whichGame -eq 1 ]
+				resultGame=`getOneGameOffAday $startDateRefSeconde $start "$playerUrlFormat" $lastRefreshGameId $totalGame $whichGame`
+				retourFonction=$?
+				if [ $retourFonction -ne 0 ]
 				then
-					resultGame=`getFirstGameDay $startDateRefSeconde $start "$playerUrlFormat" $totalGame`
-					if [ $? -ne 0 ]
-					then
-						exit 1
-					fi
-				elif [ $whichGame -eq 2 ]
-				then
-                       			resultGame=`getLastGameDay $startDateRefSeconde $start "$playerUrlFormat"`
-					if [ $? -ne 0 ]
-					then
-						exit 1
-					fi
-				else
-					resultGame=`getIDGameDay $startDateRefSeconde $start "$playerUrlFormat" $lastRefreshGameId $totalGame`
-					retourFonction=$?
-					if [ $retourFonction -ne 0 ]
-					then
-						exit $retourFonction
-					fi
-                        	fi
+					exit $retourFonction
+				fi
+
 				ok=`echo $resultGame | cut -d ';' -f 1`
                         	idGame=`echo $resultGame | cut -d ';' -f 2`
                         	startGame=`echo $resultGame | cut -d ';' -f 3`
@@ -1079,110 +1064,32 @@ function getStartforADAy()
 	echo "$idGame;$startGame"
 }
 
-function getFirstGameDay()
-{
-	# $1: $referenceDateSeconde
-	# $2: $start
-	# $3: $playerUrlFormat
-	# $3: $totalGame
-	referenceDateSeconde=$1
-	start=$2
-	playerUrlFormat=$3
-	totalGame=$4
-	firstRound=1
-
-	while [ $ok -ne 1 ]
-        do
-		currentDate=`cat tmpH5/dateAuto.tmp`
-        	currentDateSeconde=`date -d"$currentDate" +%s`
-
-		if [ $currentDateSeconde -lt $referenceDateSeconde ]
-        	then
-			ok=1
-                	idFirstGame=`cat tmpH5/listeAutoSave.tmp | jq -r '.Results[] | .Id | .MatchId'`
-               		startFirstGame=$startSave
-       		fi
-
-        	startSave=$start
-       		cat tmpH5/listeAuto.tmp > tmpH5/listeAutoSave.tmp
-        	let start="$start + 1"
-                
-		# On gere l'exception
-                if [ $startSave -gt $totalGame ] && [ $firstRound -eq 1 ]
-                then
-			ok=1
-                        idFirstGame=`cat tmpH5/listeAutoSave.tmp | jq -r '.Results[] | .Id | .MatchId'`
-                        startFirstGame=$startSave
-		fi
-
-        	waitOneS $startTime 250
-        	startTime=$(($(date +%s%N)/1000000))
-        	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "tmpH5/listeAuto.tmp"
-		cat tmpH5/listeAuto.tmp | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1 > tmpH5/dateAuto.tmp
-		firstRound=0
-	done
-	
-	echo "$ok;$idFirstGame;$startFirstGame"
-}
-
-function getLastGameDay()
-{
-        # $1: $referenceDateSeconde
-        # $2: $start
-	# $3: $playerUrlFormat
-        referenceDateSeconde=$1
-        start=$2
-	playerUrlFormat=$3
-	firstRound=1
-
-        while [ $ok -ne 1 ]
-        do
-                currentDate=`cat tmpH5/dateAuto.tmp` 
-                currentDateSeconde=`date -d"$currentDate" +%s`
-
-                if [ $currentDateSeconde -gt $referenceDateSeconde ]
-                then
-                        ok=1
-                        idLastGame=`cat tmpH5/listeAutoSave.tmp | jq -r '.Results[] | .Id | .MatchId'`
-                        startLastGame=$startSave
-                fi
-
-                startSave=$start
-                cat tmpH5/listeAuto.tmp > tmpH5/listeAutoSave.tmp
-                let start="$start - 1"
-
-		# On gere l'exception
-		if [ $startSave -eq 0 ] && [ $firstRound -eq 1 ]
-                then
-                        ok=1
-                        idLastGame=`cat tmpH5/listeAutoSave.tmp | jq -r '.Results[] | .Id | .MatchId'`
-                        startLastGame=$startSave
-                fi
-
-                waitOneS $startTime 250
-                startTime=$(($(date +%s%N)/1000000))
-                handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "tmpH5/listeAuto.tmp"
-		cat tmpH5/listeAuto.tmp | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1 > tmpH5/dateAuto.tmp
-		firstRound=0
-        done
-        echo "$ok;$idLastGame;$startLastGame"
-}
-
-function getIDGameDay()
+function getOneGameOffAday()
 {
         # $1: $referenceDateSeconde
         # $2: $start
 	# $3: $playerUrlFormat
 	# $4: $lastRefreshGameId
 	# $5: $totalGame
+	# $6: First Game, Last Game Or ID Game (1, 2 or 3)
+
         referenceDateSeconde=$1
         start=$2
 	playerUrlFormat=$3
 	lastRefreshGameId=$4
 	totalGame=$5
+	whichGame=$6
 	startStart=$start
-	timeDown=0
-	timeUp=1		
+
+	if [ $whichGame -eq 1 ]
+	then
+		timeDown=1
+		timeUp=0
+	else
+		timeDown=0
+		timeUp=1
+	fi
+	
 
         while [ $ok -ne 1 ]
         do
@@ -1197,26 +1104,35 @@ function getIDGameDay()
 
 		currentGameID=`cat tmpH5/idAuto.tmp`
 
-                if [ "$currentGameID" = "$lastRefreshGameId" ]
+                if [ $whichGame -eq 3 -a "$currentGameID" = "$lastRefreshGameId" ] || [ $whichGame -eq 1 -a $currentDateSeconde -lt $referenceDateSeconde ] || [ $whichGame -eq 2 -a $currentDateSeconde -gt $referenceDateSeconde ]
                 then
-			if [ $start -eq 0 ]
+			if [ $start -eq 0 -a \( $whichGame -eq 3 -o $whichGame -eq 2 \) ] || [ $start -eq $totalGame -a $whichGame -eq 1 ]
 			then
-				exit 2
+				if [ $whichGame -eq 3 ]
+				then
+					exit 2
+				else
+					startToUse=$start
+				fi
+			elif [ $whichGame -eq 1 ]
+			then
+				let startToUse="$start - 1"
+			else
+				let startToUse="$start + 1"
 			fi
 
 			waitOneS $startTime 250
 		        startTime=$(($(date +%s%N)/1000000))
-			let start="$start - 1"
-		        handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "tmpH5/listeAuto.tmp"
+		        handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$startToUse&count=1" "tmpH5/listeAuto.tmp"
                         ok=1
                         idGame=`cat tmpH5/listeAuto.tmp | jq -r '.Results[] | .Id | .MatchId'`
-                        startGame=$start
-		elif [ $currentDateSeconde -gt $referenceDateSeconde ] || [ $start -eq 0 ]
+                        startGame=$startToUse
+		elif [ $whichGame -eq 3 -a $currentDateSeconde -gt $referenceDateSeconde ] || [ $start -eq 0 ]
 		then
 			timeDown=1
 			timeUp=0
 			start=$startStart
-		elif [ $currentDateSeconde -lt $referenceDateSeconde ] || [ $start -eq $totalGame ]
+		elif [ $whichGame -eq 3 -a $currentDateSeconde -lt $referenceDateSeconde ] || [ $start -eq $totalGame ]
 		then
 			timeDown=0
 			timeUp=1
@@ -1371,6 +1287,11 @@ do
 	endDate=`echo $playerToTrack | cut -d ';' -f 3`
 	internId=`echo $playerToTrack | cut -d ';' -f 4`
 	lastRefreshGameId=`echo $playerToTrack | cut -d ';' -f 5`
+
+	if [ -z "$lastRefreshGameId" ]
+	then
+		lastRefreshGameId="-"
+	fi
 
 	controleParameter "$gamertag" "$startDate" "$endDate" 
 	if [ $? -ne 0 ]
