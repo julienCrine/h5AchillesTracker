@@ -723,7 +723,7 @@ fi
 function usage()
 {
 	printf "\n\n\n"
-	echo "h5AchillesTracker v0.85 Copyright (C) 2016  Julien CRINE"
+	echo "h5AchillesTracker v0.9 Copyright (C) 2016  Julien CRINE"
 	echo "email: julien-crine@orange.fr"
 	echo "Paypal donation: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=julien%2dcrine%40orange%2efr&lc=FR&item_name=Julien%20CRINE&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"
 	printf "\n\n\n"
