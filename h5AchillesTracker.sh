@@ -818,7 +818,7 @@ do
 		;;
 	esac
 done
-export $SUBSCRIPTIONKEY
+export SUBSCRIPTIONKEY
 
 #####################################################################################################
 #					First Integrity Control				 	    #
@@ -951,10 +951,6 @@ function handleCurlError()
 		elif [ ! -z "$statusCode" ] && [ "$statusCode" = "401" ]
 		then
 			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) ERROR: Subscription Key is not valid ! ($SUBSCRIPTIONKEY)" >> compagnyScriptError.log
-			exit 1
-		elif [ ! -z "$statusCode" ]
-		then
-			echo "`date "+%Y-%m-%d_%H:%M:%S"` (Local Time) FATAL ERROR: Unknow StatusCode ($statusCode)" >> compagnyScriptError.log
 			exit 1
 		else		
 			atemptCurlCommand=0
