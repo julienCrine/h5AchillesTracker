@@ -694,10 +694,17 @@
 
 IFS="
 "
+#####################################################################################################
+#					Clean Bad interrupt				 	    #
+#####################################################################################################
 
 # Nettoyer les passages précédents
 rm logsH5/liveTracking.tmp.log 2> /dev/null
 rm -fr tmpH5 2> /dev/null
+
+#####################################################################################################
+#					Prepare custom tree				 	    #
+#####################################################################################################
 
 if [ ! -d "logsH5" ]
 then
@@ -718,6 +725,10 @@ then
 		exit 1
 	fi
 fi
+
+#####################################################################################################
+#					Default function				 	    #
+#####################################################################################################
 
 function usage()
 {
@@ -759,6 +770,7 @@ function usage()
 			echo "-e [DateEnd]		: La date de la derniere game à tracker (Optionnel)"
 			echo "-r 			: [RefreshStat] Flag de rafraichissement des stats contenu dans le fichier h5AchillesTracker.statistique"
 			echo "-m 			: [RefreshMetaData] Flag de rafraichissement des metadatas"
+			echo "-p 			: [DisplayPercent] Flag qui indique qu'il faut afficher le pourcentage de complétion par joueur"
 			echo "-f [PathFile]		: En mode fichier indique l'emplacement du fichier a charger"
 			echo "-k [SubscriptionKey]	: La clef de souscription à l'API H5 343 Industries, si vous n'en avez pas procurez vous en une ici: https://developer.haloapi.com/products/560af1e42109182040fb56fc (il faut se log avec son compte xbox live)"
 			echo "-l [partOfLicence]	: Afficher une partie de la licence (warranty, affiche les garanties et conditions les conditions)"
@@ -770,6 +782,7 @@ function usage()
 			echo "-e [DateEnd]		: The date of last game to track (Optionnal)"
 			echo "-r 			: [RefreshStat] Flag to refresh stats in file h5AchillesTracker.statistique"
 			echo "-m 			: [RefreshMetaData] Flag to refresh metadatas"
+			echo "-p 			: [DisplayPercent] Flag display pourcent progression by player"
 			echo "-f [PathFile]		: In inpout file mode use it for pathfile"
 			echo "-k [SubscriptionKey]	: Use it for set your subscription key to 343 H5 API, if you dont have one you can obtain one here: https://developer.haloapi.com/products/560af1e42109182040fb56fc (loging with xbox live account)"
 			echo "-l [partOfLicence]	: Display a part of licence (warranty, display warranty and conditions the conditions)"
@@ -779,11 +792,16 @@ function usage()
 	fi
 }
 
+#####################################################################################################
+#					Getops specification				 	    #
+#####################################################################################################
+
 gamertag=""
 startDate=""
 endDate=""
 optionR=0
 optionM=0
+optionP=0
 pathFile=""
 SUBSCRIPTIONKEY="2096ca67bcd44b47aea128c814f92df2"
 #SUBSCRIPTIONKEY="Put Your Subscription Key Here"
@@ -794,7 +812,7 @@ then
 	exit 0;
 fi
 
-while getopts ":g:s:e:rmf:k:hl:" option
+while getopts ":g:s:e:rmpf:k:hl:" option
 do
 	case $option in
 	g)
@@ -811,6 +829,9 @@ do
 		;;
 	m)
 		optionM=1
+		;;
+	p)
+		optionP=1
 		;;
 	f)
 		pathFile=$OPTARG
@@ -911,10 +932,6 @@ fi
 #					End First Integrity Control			 	    #
 #####################################################################################################
 
-#Warzone 1/ https://www.halowaypoint.com/en-us/games/halo-5-guardians/xbox-one/mode/warzone/matches/18116def-0ebd-481a-8f3e-2e7fd27f79fd/players/hg%20iluvatar?gameHistoryMatchIndex=898&gameHistoryGameModeFilter=All
-
-#Arena 1/ https://www.halowaypoint.com/en-us/games/halo-5-guardians/xbox-one/mode/arena/matches/e2cd0969-1fc5-4d31-ac10-39cb8fe441cf/players/hg%20iluvatar?gameHistoryMatchIndex=921&gameHistoryGameModeFilter=All
-
 #####################################################################################################
 #					Declaration des fonctions				    #
 #####################################################################################################
@@ -1009,7 +1026,7 @@ function getStartforADAy()
 	while [ $ok -ne 1 ]
 	do
        		startTime=$(($(date +%s%N)/1000000))
-		echo "Trace getdate w0: min: $startMin max: $startMax start:$start" >> trace
+
 		let diffBetweenMaxAndMin="$startMax - $startMin"
 
         	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "tmpH5/listeAuto.tmp"
@@ -1302,6 +1319,41 @@ then
 	waitOneS $startTime
 fi
 
+#####################################################################################################
+#					Creation des variables total				    #
+#####################################################################################################
+
+tooFastForYouToReach=41000
+notSoFastToReach=1000
+theReaperToReach=10250
+forgotToPayTheTollToReach=2100
+notSoToughToReach=20500
+sorryMateToReach=82100
+luckyToReach=8200
+fromTheTopRopeToReach=10300
+tillSomeoneLosesAnEyeToReach=30800
+cantWeAlongToReach=41000
+deconstructedToReach=61600
+standardIssueToReach=820800
+fromDowntownToReach=10300
+firstStrikeToReach=15400
+itsAbirdToReach=5100
+bodyGuardToReach=61600
+grandTheftToReach=4100
+almostDoesntCountToReach=61600
+kickingItOldSchoolToReach=2100
+noHardFeelingsToReach=1026000
+lawnmowerToReach=10300
+vandalismToReach=24600
+thePainTrainToReach=20500
+powerPlayToReach=205200
+imJustPerfectToReach=41000
+isThereNoOneElseToReach=20500
+stingLikeAbeeToReach=102600
+soCuddlyToReach=10300
+roadTripToReach=61600
+somethingOnYourFaceToReach=615600
+lookMaNoPinToReach=82100
 
 for playerToTrack in $(cat tmpH5/file.players.tmp)
 do 
@@ -1711,47 +1763,85 @@ do
 
 	if [ ! -e "h5AchillesTracker.statistique" ] || [ `cat h5AchillesTracker.statistique | wc -l` -eq 0 ]
 	then
-		echo "INTERN ID;GAMERTAG;DATE FIRST GAME TRACKING;NUMBER GAME WARZONE;NUMBER GAME ARENA;TOO FAST FOR YOU;NOT SO FAST;THE REAPER;FORGOT TO PAY THE TOLL;NOT SO TOUGH;SORRY MATE;LUCKY;FROM THE TOP ROPE;TILL SOMEONE LOSES AN EYE;CAN'T WE GET ALONG?;DECONSTRUCTED;STANDARD ISSUE;FROM DOWNTOWN;FIRST STRIKE;IT'S A BIRD!;BODY GUARD;GRAND THEFT;ALMOST DOESN'T COUNT;KICKING IT OLD SCHOOL;NO HARD FEELINGS;LAWNMOWER;VANDALISM;THE PAIN TRAIN;POWER PLAY;I'M JUST PERFECT;IS THERE NO ONE ELSE?;STING LIKE A BEE;SO CUDDLY;ROAD TRIP;SOMETHING ON YOUR FACE;LOOK MA NO PIN;Last Update (GMT +0);Date last game tracking (GMT +0);Last game tracking STRING;Description Last game tracking" >> h5AchillesTracker.statistique
+		echo "INTERN ID;GAMERTAG;DATE FIRST GAME TRACKING;NUMBER GAME WARZONE;NUMBER GAME ARENA;TOO FAST FOR YOU ($tooFastForYouToReach);NOT SO FAST ($notSoFastToReach);THE REAPER ($theReaperToReach);FORGOT TO PAY THE TOLL ($forgotToPayTheTollToReach);NOT SO TOUGH ($notSoToughToReach);SORRY MATE ($sorryMateToReach);LUCKY ($luckyToReach);FROM THE TOP ROPE ($fromTheTopRopeToReach);TILL SOMEONE LOSES AN EYE ($tillSomeoneLosesAnEyeToReach);CAN'T WE GET ALONG? ($cantWeAlongToReach);DECONSTRUCTED ($deconstructedToReach);STANDARD ISSUE ($standardIssueToReach);FROM DOWNTOWN ($fromDowntownToReach);FIRST STRIKE ($firstStrikeToReach);IT'S A BIRD! ($itsAbirdToReach);BODY GUARD ($bodyGuardToReach);GRAND THEFT ($grandTheftToReach);ALMOST DOESN'T COUNT ($almostDoesntCountToReach);KICKING IT OLD SCHOOL ($kickingItOldSchoolToReach);NO HARD FEELINGS ($noHardFeelingsToReach);LAWNMOWER ($lawnmowerToReach);VANDALISM ($vandalismToReach);THE PAIN TRAIN ($thePainTrainToReach);POWER PLAY ($powerPlayToReach);I'M JUST PERFECT ($imJustPerfectToReach);IS THERE NO ONE ELSE? ($isThereNoOneElseToReach);STING LIKE A BEE ($stingLikeAbeeToReach);SO CUDDLY ($soCuddlyToReach);ROAD TRIP ($roadTripToReach);SOMETHING ON YOUR FACE ($somethingOnYourFaceToReach);LOOK MA NO PIN ($lookMaNoPinToReach);Last Update (GMT +0);Date last game tracking (GMT +0);Last game tracking STRING;Description Last game tracking" >> h5AchillesTracker.statistique
 	fi
 
 	if [ $optionR -eq 1 ]
 	then
 		oldValues=`cat h5AchillesTracker.statistique | grep $internId`
 
-		let nbrGameWar="$nbrGameWar + `echo $oldValues | cut -d ';' -f 4`"
-		let nbrGameArena="$nbrGameArena + `echo $oldValues | cut -d ';' -f 5`"
-		let tooFastForYou="$tooFastForYou + `echo $oldValues | cut -d ';' -f 6`"
-		let notSoFast="$notSoFast + `echo $oldValues | cut -d ';' -f 7`"
-		let theReaper="$theReaper + `echo $oldValues | cut -d ';' -f 8`"
-		let forgotToPayTheToll="$forgotToPayTheToll + `echo $oldValues | cut -d ';' -f 9`"
-		let notSoTough="$notSoTough + `echo $oldValues | cut -d ';' -f 10`"
-		let sorryMate="$sorryMate + `echo $oldValues | cut -d ';' -f 11`"
-		let lucky="$lucky + `echo $oldValues | cut -d ';' -f 12`"
-		let fromTheTopRope="$fromTheTopRope + `echo $oldValues | cut -d ';' -f 13`"
-		let tillSomeoneLosesAnEye="$tillSomeoneLosesAnEye + `echo $oldValues | cut -d ';' -f 14`"
-		let cantWeAlong="$cantWeAlong + `echo $oldValues | cut -d ';' -f 15`"
-		let deconstructed="$deconstructed + `echo $oldValues | cut -d ';' -f 16`"
-		let standardIssue="$standardIssue + `echo $oldValues | cut -d ';' -f 17`"
-		let fromDowntown="$fromDowntown + `echo $oldValues | cut -d ';' -f 18`"
-		let firstStrike="$firstStrike + `echo $oldValues | cut -d ';' -f 19`"
-		let itsAbird="$itsAbird + `echo $oldValues | cut -d ';' -f 20`"
-		let bodyGuard="$bodyGuard + `echo $oldValues | cut -d ';' -f 21`"
-		let grandTheft="$grandTheft + `echo $oldValues | cut -d ';' -f 22`"
-		let almostDoesntCount="$almostDoesntCount + `echo $oldValues | cut -d ';' -f 23`"
-		let kickingItOldSchool="$kickingItOldSchool + `echo $oldValues | cut -d ';' -f 24`"
-		let noHardFeelings="$noHardFeelings + `echo $oldValues | cut -d ';' -f 25`"
-		let lawnmower="$lawnmower + `echo $oldValues | cut -d ';' -f 26`"
-		let vandalism="$vandalism + `echo $oldValues | cut -d ';' -f 27`"
-		let thePainTrain="$thePainTrain + `echo $oldValues | cut -d ';' -f 28`"
-		let powerPlay="$powerPlay + `echo $oldValues | cut -d ';' -f 29`"
-		let imJustPerfect="$imJustPerfect + `echo $oldValues | cut -d ';' -f 30`"
-		let isThereNoOneElse="$isThereNoOneElse + `echo $oldValues | cut -d ';' -f 31`"
-		let stingLikeAbee="$stingLikeAbee + `echo $oldValues | cut -d ';' -f 32`"
-		let soCuddly="$soCuddly + `echo $oldValues | cut -d ';' -f 33`"
-		let roadTrip="$roadTrip + `echo $oldValues | cut -d ';' -f 34`"
-		let somethingOnYourFace="$somethingOnYourFace + `echo $oldValues | cut -d ';' -f 35`"
-		let lookMaNoPin="$lookMaNoPin + `echo $oldValues | cut -d ';' -f 36`"
+		let nbrGameWar="$nbrGameWar + `echo $oldValues | cut -d ';' -f 4 | cut -d ' ' -f 1`"
+		let nbrGameArena="$nbrGameArena + `echo $oldValues | cut -d ';' -f 5 | cut -d ' ' -f 1`"
+		let tooFastForYou="$tooFastForYou + `echo $oldValues | cut -d ';' -f 6 | cut -d ' ' -f 1`"
+		let notSoFast="$notSoFast + `echo $oldValues | cut -d ';' -f 7 | cut -d ' ' -f 1`"
+		let theReaper="$theReaper + `echo $oldValues | cut -d ';' -f 8 | cut -d ' ' -f 1`"
+		let forgotToPayTheToll="$forgotToPayTheToll + `echo $oldValues | cut -d ';' -f 9 | cut -d ' ' -f 1`"
+		let notSoTough="$notSoTough + `echo $oldValues | cut -d ';' -f 10 | cut -d ' ' -f 1`"
+		let sorryMate="$sorryMate + `echo $oldValues | cut -d ';' -f 11 | cut -d ' ' -f 1`"
+		let lucky="$lucky + `echo $oldValues | cut -d ';' -f 12 | cut -d ' ' -f 1`"
+		let fromTheTopRope="$fromTheTopRope + `echo $oldValues | cut -d ';' -f 13 | cut -d ' ' -f 1`"
+		let tillSomeoneLosesAnEye="$tillSomeoneLosesAnEye + `echo $oldValues | cut -d ';' -f 14 | cut -d ' ' -f 1`"
+		let cantWeAlong="$cantWeAlong + `echo $oldValues | cut -d ';' -f 15 | cut -d ' ' -f 1`"
+		let deconstructed="$deconstructed + `echo $oldValues | cut -d ';' -f 16 | cut -d ' ' -f 1`"
+		let standardIssue="$standardIssue + `echo $oldValues | cut -d ';' -f 17 | cut -d ' ' -f 1`"
+		let fromDowntown="$fromDowntown + `echo $oldValues | cut -d ';' -f 18 | cut -d ' ' -f 1`"
+		let firstStrike="$firstStrike + `echo $oldValues | cut -d ';' -f 19 | cut -d ' ' -f 1`"
+		let itsAbird="$itsAbird + `echo $oldValues | cut -d ';' -f 20 | cut -d ' ' -f 1`"
+		let bodyGuard="$bodyGuard + `echo $oldValues | cut -d ';' -f 21 | cut -d ' ' -f 1`"
+		let grandTheft="$grandTheft + `echo $oldValues | cut -d ';' -f 22 | cut -d ' ' -f 1`"
+		let almostDoesntCount="$almostDoesntCount + `echo $oldValues | cut -d ';' -f 23 | cut -d ' ' -f 1`"
+		let kickingItOldSchool="$kickingItOldSchool + `echo $oldValues | cut -d ';' -f 24 | cut -d ' ' -f 1`"
+		let noHardFeelings="$noHardFeelings + `echo $oldValues | cut -d ';' -f 25 | cut -d ' ' -f 1`"
+		let lawnmower="$lawnmower + `echo $oldValues | cut -d ';' -f 26 | cut -d ' ' -f 1`"
+		let vandalism="$vandalism + `echo $oldValues | cut -d ';' -f 27 | cut -d ' ' -f 1`"
+		let thePainTrain="$thePainTrain + `echo $oldValues | cut -d ';' -f 28 | cut -d ' ' -f 1`"
+		let powerPlay="$powerPlay + `echo $oldValues | cut -d ';' -f 29 | cut -d ' ' -f 1`"
+		let imJustPerfect="$imJustPerfect + `echo $oldValues | cut -d ';' -f 30 | cut -d ' ' -f 1`"
+		let isThereNoOneElse="$isThereNoOneElse + `echo $oldValues | cut -d ';' -f 31 | cut -d ' ' -f 1`"
+		let stingLikeAbee="$stingLikeAbee + `echo $oldValues | cut -d ';' -f 32 | cut -d ' ' -f 1`"
+		let soCuddly="$soCuddly + `echo $oldValues | cut -d ';' -f 33 | cut -d ' ' -f 1`"
+		let roadTrip="$roadTrip + `echo $oldValues | cut -d ';' -f 34 | cut -d ' ' -f 1`"
+		let somethingOnYourFace="$somethingOnYourFace + `echo $oldValues | cut -d ';' -f 35 | cut -d ' ' -f 1`"
+		let lookMaNoPin="$lookMaNoPin + `echo $oldValues | cut -d ';' -f 36 | cut -d ' ' -f 1`"
+	fi
 
+	if [ $optionP -eq 1 ]
+	then
+		tooFastForYou="$tooFastForYou ("`echo "scale=3; ($tooFastForYou*100)/$tooFastForYouToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		notSoFast="$notSoFast ("`echo "scale=3; ($notSoFast*100)/$notSoFastToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		theReaper="$theReaper ("`echo "scale=3; ($theReaper*100)/$theReaperToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		forgotToPayTheToll="$forgotToPayTheToll ("`echo "scale=3; ($forgotToPayTheToll*100)/$forgotToPayTheTollToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		notSoTough="$notSoTough ("`echo "scale=3; ($notSoTough*100)/$notSoToughToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		sorryMate="$sorryMate ("`echo "scale=3; ($sorryMate*100)/$sorryMateToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		lucky="$lucky ("`echo "scale=3; ($lucky*100)/$luckyToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		fromTheTopRope="$fromTheTopRope ("`echo "scale=3; ($fromTheTopRope*100)/$fromTheTopRopeToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		tillSomeoneLosesAnEye="$tillSomeoneLosesAnEye ("`echo "scale=3; ($tillSomeoneLosesAnEye*100)/$tillSomeoneLosesAnEyeToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		cantWeAlong="$cantWeAlong ("`echo "scale=3; ($cantWeAlong*100)/$cantWeAlongToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		deconstructed="$deconstructed ("`echo "scale=3; ($deconstructed*100)/$deconstructedToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		standardIssue="$standardIssue ("`echo "scale=3; ($standardIssue*100)/$standardIssueToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		fromDowntown="$fromDowntown ("`echo "scale=3; ($fromDowntown*100)/$fromDowntownToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		firstStrike="$firstStrike ("`echo "scale=3; ($firstStrike*100)/$firstStrikeToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		itsAbird="$itsAbird ("`echo "scale=3; ($itsAbird*100)/$itsAbirdToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		bodyGuard="$bodyGuard ("`echo "scale=3; ($bodyGuard*100)/$bodyGuardToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		grandTheft="$grandTheft ("`echo "scale=3; ($grandTheft*100)/$grandTheftToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		almostDoesntCount="$almostDoesntCount ("`echo "scale=3; ($almostDoesntCount*100)/$almostDoesntCountToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		kickingItOldSchool="$kickingItOldSchool ("`echo "scale=3; ($kickingItOldSchool*100)/$kickingItOldSchoolToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		noHardFeelings="$noHardFeelings ("`echo "scale=3; ($noHardFeelings*100)/$noHardFeelingsToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		lawnmower="$lawnmower ("`echo "scale=3; ($lawnmower*100)/$lawnmowerToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		vandalism="$vandalism ("`echo "scale=3; ($vandalism*100)/$vandalismToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		thePainTrain="$thePainTrain ("`echo "scale=3; ($thePainTrain*100)/$thePainTrainToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		powerPlay="$powerPlay ("`echo "scale=3; ($powerPlay*100)/$powerPlayToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		imJustPerfect="$imJustPerfect ("`echo "scale=3; ($imJustPerfect*100)/$imJustPerfectToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		isThereNoOneElse="$isThereNoOneElse ("`echo "scale=3; ($isThereNoOneElse*100)/$isThereNoOneElseToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		stingLikeAbee="$stingLikeAbee ("`echo "scale=3; ($stingLikeAbee*100)/$stingLikeAbeeToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		soCuddly="$soCuddly ("`echo "scale=3; ($soCuddly*100)/$soCuddlyToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		roadTrip="$roadTrip ("`echo "scale=3; ($roadTrip*100)/$roadTripToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		somethingOnYourFace="$somethingOnYourFace ("`echo "scale=3; ($somethingOnYourFace*100)/$somethingOnYourFaceToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+		lookMaNoPin="$lookMaNoPin ("`echo "scale=3; ($lookMaNoPin*100)/$lookMaNoPinToReach" | bc | awk '{printf "%.3f", $0}' `"%)"
+	fi
+
+	if [ $optionR -eq 1 ]
+	then
 		sed -i "`cat h5AchillesTracker.statistique | grep -n $internId | cut -d ':' -f 1`s/.*/$internId;$gamertag;`echo $oldValues | cut -d ';' -f 3`;$nbrGameWar;$nbrGameArena;$tooFastForYou;$notSoFast;$theReaper;$forgotToPayTheToll;$notSoTough;$sorryMate;$lucky;$fromTheTopRope;$tillSomeoneLosesAnEye;$cantWeAlong;$deconstructed;$standardIssue;$fromDowntown;$firstStrike;$itsAbird;$bodyGuard;$grandTheft;$almostDoesntCount;$kickingItOldSchool;$noHardFeelings;$lawnmower;$vandalism;$thePainTrain;$powerPlay;$imJustPerfect;$isThereNoOneElse;$stingLikeAbee;$soCuddly;$roadTrip;$somethingOnYourFace;$lookMaNoPin;$nowdate;$dateLastGame;$idLastGame;/" h5AchillesTracker.statistique
 	else
 		newInternId=`cat h5AchillesTracker.statistique | wc -l`
