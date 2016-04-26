@@ -1053,7 +1053,8 @@ function getStartforADAy()
                         	if [ $dateSecondeLastStart -lt $startDateRefSeconde ] && [ $diffBetweenMaxAndMin -ne 1 ]
                         	then
                                 	startMax=$start
-                                	let gameBetweenLastStartAndStart="(($startDateSeconde - $dateSecondeLastStart) / 86400) * $averageGamePerDay"
+
+                                	let gameBetweenLastStartAndStart="(($startDateRefSeconde - $dateSecondeLastStart) / 86400) * $averageGamePerDay"
                                 	let start="$start - $gameBetweenLastStartAndStart"
 
                                 	if [ $start -le $startMin ]
@@ -1063,7 +1064,7 @@ function getStartforADAy()
                         	elif [ $dateSecondeLastStart -gt $startDateRefSeconde ] && [ $diffBetweenMaxAndMin -ne 1 ]
                         	then
                                 	startMin=$start
-                               		let gameBetweenLastStartAndStart="(($dateSecondeLastStart - $startDateSeconde) / 86400) * $averageGamePerDay"
+                               		let gameBetweenLastStartAndStart="(($dateSecondeLastStart - $startDateRefSeconde) / 86400) * $averageGamePerDay"
                                 	let start="$start + $gameBetweenLastStartAndStart"
 
                                 	if [ $start -ge $startMax ]
