@@ -733,7 +733,7 @@ fi
 function usage()
 {
 	printf "\n\n\n"
-	echo "h5AchillesTracker v1.1 Copyright (C) 2016  Julien CRINE"
+	echo "h5AchillesTracker v1.2 Copyright (C) 2016  Julien CRINE"
 	echo "email: julien-crine@orange.fr"
 	echo "Paypal Donation: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=julien%2dcrine%40orange%2efr&lc=FR&item_name=Julien%20CRINE&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"
 	printf "\n\n\n"
@@ -1444,6 +1444,7 @@ do
 	then
 		# End date
 		endDateSeconde=`date -d"$endDate" +%s`
+		dateLastGame=$endDate
 		if [ $startDateSeconde -gt $endDateSeconde ]
 		then
 			echo "`date "+%Y-%m-%d_%H:%M:%S"` FATAL ERROR: Date error: $startDate (Start Date) After $endDate (End Date)" | tee -a logsH5/h5AchillesTracker.error.log
@@ -1495,7 +1496,7 @@ do
 				exit 1
 			fi
 
-			idResultEnd=`echo $resultEnd | cut -d ';' -f 1`
+			idLastGame=`echo $resultEnd | cut -d ';' -f 1`
 			startLastGame=`echo $resultEnd | cut -d ';' -f 2`
 		fi
 	fi
@@ -1508,22 +1509,41 @@ do
 	#####################################################################################################
 
 	#####################################################################################################
-	#				Récupération de la liste d'ID des games			    #
+	#				Récupération de la liste d'ID des games				    #
 	#####################################################################################################
 	maxCount=25
-	if [ $startFirstGame -lt $maxCount ]
+	if [ $endDateSeconde -eq 0 ]
 	then
-		relativeStart=0
-		nbrPage=0
-		j=0
-		restCount=0
-		let maxCount="$startFirstGame + 1"
-	else
-		relativeStart=$(($startFirstGame-$maxCount+1))
+		if [ $startFirstGame -lt $maxCount ]
+		then
+			relativeStart=0
+			nbrPage=0
+			j=0
+			restCount=0
+			let maxCount="$startFirstGame + 1"
+		else
+			relativeStart=$(($startFirstGame-$maxCount+1))
 
-		nbrPage=$(($relativeStart/$maxCount))
-		j=$nbrPage
-		let restCount="$relativeStart - ($nbrPage*$maxCount)"
+			nbrPage=$(($relativeStart/$maxCount))
+			j=$nbrPage
+			let restCount="$relativeStart - ($nbrPage*$maxCount)"
+		fi
+	else
+		let diffbetweensStarts="$startFirstGame-$startLastGame"
+		if [ $diffbetweensStarts -lt $maxCount ]
+		then
+			relativeStart=$startLastGame
+			nbrPage=0
+			j=0
+			restCount=0
+			let maxCount="$diffbetweensStarts + 1"
+		else
+			relativeStart=$(($startFirstGame-$maxCount+1))
+
+			let nbrPage="$diffbetweensStarts/$maxCount"
+			j=$nbrPage
+			let restCount="$diffbetweensStarts + 1 - ($nbrPage*$maxCount)"
+		fi
 	fi
 
 	for i in `seq 0 $nbrPage`
@@ -1536,9 +1556,16 @@ do
 
 	if [ $restCount -gt 0 ] 
 	then
+		if [ $endDateSeconde -eq 0 ]
+		then
+			relativeStart=0
+		else
+			relativeStart=$startLastGame
+		fi
+
 		j=$(($nbrPage+1))
 		startTime=$(($(date +%s%N)/1000000))
-		handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=0&count=$restCount" "tmpH5/listeGame.$j.tmp"
+		handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$relativeStart&count=$restCount" "tmpH5/listeGame.$j.tmp"
 		waitOneS $startTime 250
 	fi
 
