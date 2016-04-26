@@ -1,7 +1,7 @@
 #!/bin/bash
 # « Copyright (C) 2016 Julien CRINE »
 # email: julien-crine@orange.fr
-# Paypal donation: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=julien%2dcrine%40orange%2efr&lc=FR&item_name=Julien%20CRINE&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted
+# Paypal Donation: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=julien%2dcrine%40orange%2efr&lc=FR&item_name=Julien%20CRINE&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted
 
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -733,9 +733,9 @@ fi
 function usage()
 {
 	printf "\n\n\n"
-	echo "h5AchillesTracker v1.0 Copyright (C) 2016  Julien CRINE"
+	echo "h5AchillesTracker v1.1 Copyright (C) 2016  Julien CRINE"
 	echo "email: julien-crine@orange.fr"
-	echo "Paypal donation: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=julien%2dcrine%40orange%2efr&lc=FR&item_name=Julien%20CRINE&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"
+	echo "Paypal Donation: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=julien%2dcrine%40orange%2efr&lc=FR&item_name=Julien%20CRINE&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"
 	printf "\n\n\n"
 
 	if [ \( $# -eq 1 \) -a \( "$1" = "warranty" -o "$1" = "conditions" \) ]
@@ -861,7 +861,7 @@ do
 	esac
 done
 export SUBSCRIPTIONKEY
-
+usage warranty
 #####################################################################################################
 #					First Integrity Control				 	    #
 #####################################################################################################
