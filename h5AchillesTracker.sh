@@ -722,7 +722,7 @@ fi
 function usage()
 {
 	printf "\n\n\n"
-	echo "h5AchillesTracker v0.9 Copyright (C) 2016  Julien CRINE"
+	echo "h5AchillesTracker v1.0 Copyright (C) 2016  Julien CRINE"
 	echo "email: julien-crine@orange.fr"
 	echo "Paypal donation: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=julien%2dcrine%40orange%2efr&lc=FR&item_name=Julien%20CRINE&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted"
 	printf "\n\n\n"
@@ -1009,6 +1009,9 @@ function getStartforADAy()
 	while [ $ok -ne 1 ]
 	do
        		startTime=$(($(date +%s%N)/1000000))
+		echo "Trace getdate w0: min: $startMin max: $startMax start:$start" >> trace
+		let diffBetweenMaxAndMin="$startMax - $startMin"
+
         	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "tmpH5/listeAuto.tmp"
 		cat tmpH5/listeAuto.tmp | jq -r '.Results[].MatchCompletedDate.ISO8601Date' | cut -d 'T' -f 1 > tmpH5/dateAuto.tmp
 
@@ -1030,7 +1033,7 @@ function getStartforADAy()
                         	idGame=`echo $resultGame | cut -d ';' -f 2`
                         	startGame=`echo $resultGame | cut -d ';' -f 3`
                		else
-                        	if [ $dateSecondeLastStart -lt $startDateRefSeconde ]
+                        	if [ $dateSecondeLastStart -lt $startDateRefSeconde ] && [ $diffBetweenMaxAndMin -ne 1 ]
                         	then
                                 	startMax=$start
                                 	let gameBetweenLastStartAndStart="(($startDateSeconde - $dateSecondeLastStart) / 86400) * $averageGamePerDay"
@@ -1040,7 +1043,7 @@ function getStartforADAy()
                                 	then
                                         	let start="$startMin + (($startMax - $startMin) / 2)"
                                 	fi
-                        	elif [ $dateSecondeLastStart -gt $startDateRefSeconde ]
+                        	elif [ $dateSecondeLastStart -gt $startDateRefSeconde ] && [ $diffBetweenMaxAndMin -ne 1 ]
                         	then
                                 	startMin=$start
                                		let gameBetweenLastStartAndStart="(($dateSecondeLastStart - $startDateSeconde) / 86400) * $averageGamePerDay"
@@ -1050,6 +1053,24 @@ function getStartforADAy()
                                 	then
                                         	let start="$startMin + (($startMax - $startMin) / 2)"
                                 	fi
+				elif [ $diffBetweenMaxAndMin -eq 1 ]
+				then
+					if [ $whichGame -eq 1 ]
+					then
+						waitOneS $startTime 250
+               					startTime=$(($(date +%s%N)/1000000))
+        			        	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$startMin&count=1" "tmpH5/listeAuto.tmp"
+						startGame=$startMin
+					else
+						waitOneS $startTime 250
+               					startTime=$(($(date +%s%N)/1000000))
+        			        	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$startMax&count=1" "tmpH5/listeAuto.tmp"
+						startGame=$startMax
+					fi
+
+					ok="1"
+				        idGame=`cat tmpH5/listeAuto.tmp | jq -r '.Results[] | .Id | .MatchId'`
+				        
                         	fi
                 	fi
         	else
@@ -1362,27 +1383,30 @@ do
 
 	# Start date
 	startDateSeconde=`date -d"$startDate" +%s`
+	# Date now
+	nowSeconde=`TZ=Etc/GMT+0 date +%s`
+	nowdate=`TZ=Etc/GMT+0 date "+%Y-%m-%d"`
 
 	endDateSeconde=0
 	if  [ ! -z "$endDate" ] 
 	then
 		# End date
 		endDateSeconde=`date -d"$endDate" +%s`
-
-		if [ $startDateSeconde -gt $nowSeconde ] || [ $startDateSeconde -gt $endDateSeconde ]
+		if [ $startDateSeconde -gt $endDateSeconde ]
 		then
-			echo "`date "+%Y-%m-%d_%H:%M:%S"` FATAL ERROR: Date error: $startDate (Start Date) After $endDate (End Date) or $startDate (Start Date) After Now" | tee -a logsH5/h5AchillesTracker.error.log
+			echo "`date "+%Y-%m-%d_%H:%M:%S"` FATAL ERROR: Date error: $startDate (Start Date) After $endDate (End Date)" | tee -a logsH5/h5AchillesTracker.error.log
 			exit 1
 		fi
 	fi
 
-	# Date now
-	nowSeconde=`TZ=Etc/GMT+0 date +%s`
-	nowdate=`TZ=Etc/GMT+0 date "+%Y-%m-%d"`
+	if [ $startDateSeconde -gt $nowSeconde ]
+	then
+		echo "`date "+%Y-%m-%d_%H:%M:%S"` FATAL ERROR: Date error: $startDate (Start Date) After Now" | tee -a logsH5/h5AchillesTracker.error.log
+		exit 1
+	fi
 
 	# Average game per day calcul
 	let averageGamePerDay="$totalGame / (($dateLastGameSeconde - $dateFirstGameSeconde) / 86400)"
-
 	# Day between now date and start date
 	let dayBetweenNowAndStart="($nowSeconde - $startDateSeconde) / 86400"
 	# Day between end date and start date
