@@ -696,9 +696,8 @@ IFS="
 "
 
 # Nettoyer les passages précédents
-rm tmpH5/listeGame* 2> /dev/null
 rm logsH5/liveTracking.tmp.log 2> /dev/null
-rm tmpH5/file.players.tmp 2> /dev/null
+rm -fr tmpH5 2> /dev/null
 
 if [ ! -d "logsH5" ]
 then
@@ -1104,7 +1103,7 @@ function getOneGameOffAday()
 
 		currentGameID=`cat tmpH5/idAuto.tmp`
 
-                if [ $whichGame -eq 3 -a "$currentGameID" = "$lastRefreshGameId" ] || [ $whichGame -eq 1 -a $currentDateSeconde -lt $referenceDateSeconde ] || [ $whichGame -eq 2 -a $currentDateSeconde -gt $referenceDateSeconde ]
+                if [ $whichGame -eq 3 -a "$currentGameID" = "$lastRefreshGameId" ] || [ $whichGame -eq 1 -a \( $currentDateSeconde -lt $referenceDateSeconde -o $start -eq $totalGame \) ] || [ $whichGame -eq 2 -a \( $currentDateSeconde -gt $referenceDateSeconde -o $start -eq 0 \) ]
                 then
 			if [ $start -eq 0 -a \( $whichGame -eq 3 -o $whichGame -eq 2 \) ] || [ $start -eq $totalGame -a $whichGame -eq 1 ]
 			then
@@ -1114,7 +1113,7 @@ function getOneGameOffAday()
 				else
 					startToUse=$start
 				fi
-			elif [ $whichGame -eq 1 ]
+			elif [ $whichGame -eq 1 ] || [ $whichGame -eq 3 ]
 			then
 				let startToUse="$start - 1"
 			else
@@ -1127,17 +1126,20 @@ function getOneGameOffAday()
                         ok=1
                         idGame=`cat tmpH5/listeAuto.tmp | jq -r '.Results[] | .Id | .MatchId'`
                         startGame=$startToUse
-		elif [ $whichGame -eq 3 -a $currentDateSeconde -gt $referenceDateSeconde ] || [ $start -eq 0 ]
+		elif [ $whichGame -eq 3 ]
 		then
-			timeDown=1
-			timeUp=0
-			start=$startStart
-		elif [ $whichGame -eq 3 -a $currentDateSeconde -lt $referenceDateSeconde ] || [ $start -eq $totalGame ]
-		then
-			timeDown=0
-			timeUp=1
-			start=$startStart
-                fi
+			if [ $currentDateSeconde -gt $referenceDateSeconde ] || [ $start -eq 0 ]
+			then
+				timeDown=1
+				timeUp=0
+				start=$startStart
+			elif [ $currentDateSeconde -lt $referenceDateSeconde ] || [ $start -eq $totalGame ]
+			then
+				timeDown=0
+				timeUp=1
+				start=$startStart
+		        fi
+		fi
 
 		if [ $timeDown -eq 1 ]
 		then
@@ -1393,13 +1395,6 @@ do
 	if [ $optionR -eq 1 ]
 	then
 		result=`getStartforADAy "$dayBetweenNowAndStart" "$averageGamePerDay" "$playerUrlFormat" "$startDateSeconde" "$totalGame" 3 $lastRefreshGameId`
-		# $1: dayBetweenDates
-		# $2: averageGamePerDay
-		# $3: playerUrlFormat
-		# $4: startDateRefSeconde
-		# $5: totalGame
-		# $6: First Game, Last Game Or ID Game (1, 2 or 3)
-		# $7: lastRefreshGameId
 		retourFonction=$?
 		if [ $retourFonction -eq 2 ]
 		then
@@ -1411,16 +1406,21 @@ do
 		fi	
 	else
 		result=`getStartforADAy "$dayBetweenNowAndStart" "$averageGamePerDay" "$playerUrlFormat" "$startDateSeconde" "$totalGame" 1 $lastRefreshGameId`
-		# $1: dayBetweenDates
-		# $2: averageGamePerDay
-		# $3: playerUrlFormat
-		# $4: startDateRefSeconde
-		# $5: totalGame
-		# $6: First Game, Last Game Or ID Game (1, 2 or 3)
-		# $7: lastRefreshGameId
 		if [ $? -ne 0 ]
 		then
 			exit 1
+		fi
+
+		if [ $endDateSeconde -ne 0 ]
+		then
+			resultEnd=`getStartforADAy "$dayBetweenNowAndStart" "$averageGamePerDay" "$playerUrlFormat" "$endDateSeconde" "$totalGame" 2 $lastRefreshGameId`
+			if [ $? -ne 0 ]
+			then
+				exit 1
+			fi
+
+			idResultEnd=`echo $resultEnd | cut -d ';' -f 1`
+			startLastGame=`echo $resultEnd | cut -d ';' -f 2`
 		fi
 	fi
 
