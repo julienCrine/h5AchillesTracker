@@ -1026,7 +1026,7 @@ function getStartforADAy()
 	while [ $ok -ne 1 ]
 	do
        		startTime=$(($(date +%s%N)/1000000))
-
+		echo "$startMax - $startMin" >> tmpH5/debug
 		let diffBetweenMaxAndMin="$startMax - $startMin"
 
         	handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$start&count=1" "tmpH5/listeAuto.tmp"
@@ -1466,10 +1466,6 @@ do
 	# Day between end date and start date
 	let dayBetweenEndAndStart="($endDateSeconde - $startDateSeconde) / 86400"
 
-	# TODO
-	#	1/ End empty take now
-	#	2/ End not empty use it
-	#
 	if [ $optionR -eq 1 ]
 	then
 		result=`getStartforADAy "$dayBetweenNowAndStart" "$averageGamePerDay" "$playerUrlFormat" "$startDateSeconde" "$totalGame" 3 $lastRefreshGameId`
@@ -1499,11 +1495,13 @@ do
 
 			idLastGame=`echo $resultEnd | cut -d ';' -f 1`
 			startLastGame=`echo $resultEnd | cut -d ';' -f 2`
+			echo "startLastGame: $startLastGame, id: $idLastGame"
 		fi
 	fi
 
 	idResult=`echo $result | cut -d ';' -f 1`
 	startFirstGame=`echo $result | cut -d ';' -f 2`
+	echo "startFirstGame: $startFirstGame, id: $idResult"
 
 	#####################################################################################################
 	#	Fin algoritme de récupération de la premiere game et de son "start relatif"		    #
@@ -1524,10 +1522,17 @@ do
 			let maxCount="$startFirstGame + 1"
 		else
 			relativeStart=$(($startFirstGame-$maxCount+1))
+#20
+			let nbrPage="($relativeStart/$maxCount)"
+                        if [ $nbrPage -lt 1 ]
+                        then
+                                nbrPage=1
+				let restCount="$relativeStart"
+			else
+				let restCount="$relativeStart - ($nbrPage*$maxCount)"
+                        fi
 
-			nbrPage=$(($relativeStart/$maxCount))
-			j=$nbrPage
-			let restCount="$relativeStart - ($nbrPage*$maxCount)"
+			let j="$nbrPage"
 		fi
 	else
 		let diffbetweensStarts="$startFirstGame-$startLastGame"
@@ -1541,13 +1546,19 @@ do
 		else
 			relativeStart=$(($startFirstGame-$maxCount+1))
 
-			let nbrPage="$diffbetweensStarts/$maxCount"
-			j=$nbrPage
-			let restCount="$diffbetweensStarts + 1 - ($nbrPage*$maxCount)"
+			let nbrPage="($diffbetweensStarts/$maxCount)"
+			if [ $nbrPage -lt 1 ]
+			then
+				nbrPage=1
+				let restCount="$diffbetweensStarts + 1"
+			else
+				let restCount="$diffbetweensStarts + 1 - ($nbrPage*$maxCount)"
+			fi
+			let j="$nbrPage"
 		fi
 	fi
 
-	for i in `seq 0 $nbrPage`
+	for i in `seq 1 $nbrPage`
 	do
 		startTime=$(($(date +%s%N)/1000000))
 		handleCurlError "https://www.haloapi.com/stats/h5/players/$playerUrlFormat/matches?start=$relativeStart&count=$maxCount" "tmpH5/listeGame.$i.tmp"
@@ -1570,12 +1581,12 @@ do
 		waitOneS $startTime 250
 	fi
 
-	for i in `seq 0 $j`
+	for i in `seq 1 $j`
 	do
 		cat tmpH5/listeGame.$i.tmp | jq -r '.Results[] | .Id | select(.GameMode==1) | .MatchId' >> tmpH5/listeGameArena.tmp
 	done
 
-	for i in `seq 0 $j`
+	for i in `seq 1 $j`
 	do
 		cat tmpH5/listeGame.$i.tmp | jq -r '.Results[] | .Id | select(.GameMode==4) | .MatchId' >> tmpH5/listeGameWarzone.tmp
 	done
